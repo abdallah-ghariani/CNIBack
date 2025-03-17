@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import com.example.demo.dto.AuthDto;
 import com.example.demo.dto.AuthResponseDto;
 import com.example.demo.servecies.AuthenticationService;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")

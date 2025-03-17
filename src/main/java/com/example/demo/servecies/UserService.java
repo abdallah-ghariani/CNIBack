@@ -1,6 +1,5 @@
 package com.example.demo.servecies;
 
-//import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -10,25 +9,49 @@ import org.springframework.stereotype.Service;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 
+import java.util.Optional;
+
 @Service
 public class UserService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
-	@Autowired
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
-    
+
     public String registerUser(String username, String password) {
-    	User user = new User(username,passwordEncoder.encode(password));
-    	try {
-    	userRepository.save(user);
-    	}catch(DuplicateKeyException e) {
-    		throw new DuplicateKeyException("username already used");
-    	}
-    	return "User registred";
-    }  
-    
-	@Override
-	public User loadUserByUsername(String username) throws UsernameNotFoundException {
-		return userRepository.findByUsername(username).orElseThrow(()->new UsernameNotFoundException(username));	
-	}}
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new DuplicateKeyException("Username already used");
+        }
+        User user = new User(username, passwordEncoder.encode(password));
+        userRepository.save(user);
+        return "User registered successfully";
+    }
+
+    public Optional<User> getUserById(String id) {
+        return userRepository.findById(id);
+    }
+
+    public String updateUser(String id, String newPassword) {
+        return userRepository.findById(id).map(user -> {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+            return "User updated successfully";
+        }).orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + id));
+    }
+
+    public String deleteUser(String id) {
+        if (!userRepository.existsById(id)) {
+            throw new UsernameNotFoundException("User not found with ID: " + id);
+        }
+        userRepository.deleteById(id);
+        return "User deleted successfully";
+    }
+
+    @Override
+    public User loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
+}

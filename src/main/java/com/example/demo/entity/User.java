@@ -15,9 +15,11 @@ public class User implements UserDetails{
 	
     @Id
     private String id;
-    @Indexed(unique = true)
+
+	@Indexed(unique = true)
     private String username;
     private String password;
+    private String role;
 
     public User() {}
 
@@ -33,6 +35,14 @@ public class User implements UserDetails{
     }
 
     // Getters and setters...
+    public String getRole() {
+  		return role;
+  	}
+
+  	public void setRole(String role) {
+  		this.role = role;
+  	}
+
     public String getId() {
         return id;
     }

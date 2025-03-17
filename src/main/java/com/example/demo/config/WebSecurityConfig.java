@@ -39,17 +39,16 @@ public class WebSecurityConfig {
         	.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         	.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests((request) -> request
-            	.requestMatchers("/api/auth/**").permitAll()
+            	.requestMatchers("/api/auth/**", "/users/**").permitAll()
                 .anyRequest().authenticated()
              )
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authenticationManager(authenticationManager)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
            ;
         return http.build();
     }
     
-	
-	 @Bean
 	    CorsConfigurationSource corsConfigurationSource() {
 	        CorsConfiguration configuration = new CorsConfiguration();
 
