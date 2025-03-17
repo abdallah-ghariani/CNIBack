@@ -10,6 +10,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Document(collection = "users")
 public class User implements UserDetails{
 	
@@ -18,6 +20,7 @@ public class User implements UserDetails{
 
 	@Indexed(unique = true)
     private String username;
+	@JsonIgnore
     private String password;
     private String role;
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,9 +30,8 @@ public class UserService implements UserDetailsService {
         return "User registered successfully";
     }
 
-    public Optional<User> getUserById(String id) {
-        return userRepository.findById(id);
-    }
+    public User getUserById(String id) {
+        return userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + id));} 
 
     public String updateUser(String id, String newPassword) {
         return userRepository.findById(id).map(user -> {
@@ -47,6 +47,10 @@ public class UserService implements UserDetailsService {
         }
         userRepository.deleteById(id);
         return "User deleted successfully";
+    }
+    public List<User>getAllUsers(){
+    	return this.userRepository.findAll();
+  
     }
 
     @Override

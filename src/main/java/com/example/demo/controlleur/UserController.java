@@ -8,16 +8,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    @PostMapping("/register")
+    @PostMapping()
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
             String response = userService.registerUser(user.getUsername(), user.getPassword());
@@ -28,10 +29,11 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable String id) {
-        Optional<User> user = userService.getUserById(id);
-        return user.map(ResponseEntity::ok)
-                   .orElseGet(() -> ResponseEntity.notFound().build());
+    public User getUserById(@PathVariable String id) {
+        return userService.getUserById(id);}
+    @GetMapping()
+    public List<User>getallusers(){
+    	 return   userService.getAllUsers();
     }
 
     @PutMapping("/{id}")
