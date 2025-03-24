@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import com.example.demo.dto.AuthDto;
 import com.example.demo.dto.AuthResponseDto;
 
+import io.jsonwebtoken.Claims;
+
+
 @Service
 public class AuthenticationService {
 	
@@ -19,8 +22,18 @@ public class AuthenticationService {
     private JwtService jwtService;
 
     
-    public String registerUser(AuthDto request) {
+    /*public String registerUser(AuthDto request) {
         return userService.registerUser(request.getUsername(),request.getPassword());
+    }*/
+    
+    public String getRefreshToken(String token) {
+    	return jwtService.generateRefreshToken(token);
+    }
+    
+    public AuthResponseDto refreshAccessToken(String refreshToken) {
+    	jwtService.isRefreshTokenValid(refreshToken);
+    	var user = userService.getUserById(jwtService.extractClaim(refreshToken, Claims::getSubject));
+        return new AuthResponseDto(jwtService.generateToken(user));
     }
 
     

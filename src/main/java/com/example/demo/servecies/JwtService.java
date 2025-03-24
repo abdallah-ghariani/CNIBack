@@ -59,15 +59,29 @@ public class JwtService {
                 .builder()
                 .setClaims(extraClaims)
                 .setSubject(user.getUsername())
+                .setId(user.getId())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+    
+    public String generateRefreshToken(String token) {
+    	return Jwts.builder()
+    			.setSubject(extractClaim(token, Claims::getId))
+    			.setIssuedAt(new Date(System.currentTimeMillis()))
+    			.setExpiration(new Date(System.currentTimeMillis() + 24*3600*1000))
+    			.signWith(getSignInKey(), SignatureAlgorithm.HS256)
+    			.compact();
+    }
 
     public boolean isTokenValid(String token, User user) {
         final String username = extractUsername(token);
         return (username.equals(user.getUsername())) && !isTokenExpired(token);
+    }
+    
+    public boolean isRefreshTokenValid(String token) {
+    	return !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {

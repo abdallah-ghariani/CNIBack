@@ -1,58 +1,46 @@
 package com.example.demo.controlleur;
 
+import com.example.demo.dto.AddUserDto;
 import com.example.demo.entity.User;
 import com.example.demo.servecies.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+	@Autowired
+	private UserService userService;
 
-    @PostMapping()
-    public ResponseEntity<?> registerUser(@RequestBody User user) {
-        try {
-            String response = userService.registerUser(user.getUsername(), user.getPassword());
-            return ResponseEntity.ok(response);
-        } catch (DuplicateKeyException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+	@PostMapping()
+	public User addUser(@RequestBody AddUserDto user) {
+		return userService.addUser(user.getUsername(), user.getPassword(), user.getRole());
+	}
 
-    @GetMapping("/{id}")
-    public User getUserById(@PathVariable String id) {
-        return userService.getUserById(id);}
-    @GetMapping()
-    public List<User>getallusers(){
-    	 return   userService.getAllUsers();
-    }
+	@GetMapping("/{id}")
+	public User getUserById(@PathVariable String id) {
+		return userService.getUserById(id);
+	}
+	
+	
+	@GetMapping()
+	public Page<User> getallusers(Pageable page, @RequestParam(required = false) String username,  @RequestParam(required = false) String role) {
+		return userService.getAllUsers(page, username, role);
+	}
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody User user) {
-        try {
-            String response = userService.updateUser(id, user.getPassword());
-            return ResponseEntity.ok(response);
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
+	@PutMapping("/{id}")
+	public User updateUser(@PathVariable String id, @RequestBody User user) {
+		return userService.updateUser(id, user);
+	}
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable String id) {
-        try {
-            String response = userService.deleteUser(id);
-            return ResponseEntity.ok(response);
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
+	@DeleteMapping("/{id}")
+	public void deleteUser(@PathVariable String id) {
+		this.userService.deleteUser(id);
+	}
 }

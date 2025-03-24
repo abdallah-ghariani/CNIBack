@@ -39,7 +39,7 @@ public class WebSecurityConfig {
         	.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         	.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests((request) -> request
-            	.requestMatchers("/api/auth/**", "/users/**").permitAll()
+            	.requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
              )
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -55,7 +55,7 @@ public class WebSecurityConfig {
 	        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
 	        configuration.setAllowedMethods(List.of("*"));
 	        configuration.setAllowedHeaders(List.of("Authorization","Content-Type"));
-
+	        configuration.setAllowCredentials(true);
 	        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
 	        source.registerCorsConfiguration("/api/**",configuration);
