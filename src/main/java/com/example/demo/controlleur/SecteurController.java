@@ -1,0 +1,47 @@
+package com.example.demo.controlleur;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.entity.Secteur;
+import com.example.demo.servecies.SecteurService;
+
+@RestController
+@RequestMapping("/api/secteurs")
+public class SecteurController {
+
+    @Autowired
+    private SecteurService secteurService;
+
+    @GetMapping
+    public Page<Secteur> getAllSecteurs(Pageable pageable) {
+        return secteurService.getAll(pageable);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Secteur addSecteur(@RequestParam String name) {
+        return secteurService.addSecteur(name);
+    }
+
+    @GetMapping("/{id}")
+    public Secteur getSecteurById(@PathVariable String id) {
+        return secteurService.getSecteurById(id);
+    }
+
+    @PutMapping("/{id}")
+    public Secteur updateSecteur(@PathVariable String id, @RequestBody Secteur updatedSecteur) {
+        return secteurService.updateSecteur(id, updatedSecteur);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteSecteur(@PathVariable String id) {
+        secteurService.deleteSecteur(id);
+    }
+}
+
