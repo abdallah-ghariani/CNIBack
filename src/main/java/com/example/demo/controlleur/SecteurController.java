@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.demo.dto.SecteurAddDto;
 import com.example.demo.entity.Secteur;
 import com.example.demo.servecies.SecteurService;
 
@@ -24,8 +25,8 @@ public class SecteurController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Secteur addSecteur(@RequestParam String name) {
-        return secteurService.addSecteur(name);
+    public Secteur addSecteur(@RequestBody SecteurAddDto secteur) {
+        return secteurService.addSecteur(secteur.getName());
     }
 
     @GetMapping("/{id}")
