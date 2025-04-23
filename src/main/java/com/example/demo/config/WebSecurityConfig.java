@@ -39,7 +39,7 @@ public class WebSecurityConfig {
         	.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         	.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests((request) -> request
-            	.requestMatchers("/api/auth/**","/api/services/**","/api/structures/**","/api/secteurs/**").permitAll()
+            	.requestMatchers("/api/auth/**","/api/services/**","/api/structures/**","/api/secteurs/**","/api/adheration/**").permitAll()
                 .anyRequest().authenticated()
              )
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -68,4 +68,3 @@ public class WebSecurityConfig {
     
     
 }
-

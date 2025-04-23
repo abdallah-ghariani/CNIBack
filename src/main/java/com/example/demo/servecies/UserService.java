@@ -31,10 +31,15 @@ public class UserService implements UserDetailsService {
 	private PasswordEncoder passwordEncoder;
 
 	public User addUser(String username, String password, String role) {
+		return addUser(username, password, role, null, null);
+	}
+
+	public User addUser(String username, String password, String role, String structure, String secteur) {
 		if (userRepository.findByUsername(username).isPresent()) {
 			throw new DuplicateKeyException("Username already used");
 		}
-		User user = new User(username, passwordEncoder.encode(password),role);
+		String encoded = passwordEncoder.encode(password);
+		User user = new User(username, encoded, role, structure, secteur);
 		return userRepository.save(user);
 	}
 

@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.example.demo.entity.Service;
 import com.example.demo.entity.Structure;
 import com.example.demo.repository.StructureRepository;
 

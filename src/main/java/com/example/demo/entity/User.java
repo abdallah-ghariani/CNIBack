@@ -25,6 +25,8 @@ public class User implements UserDetails{
     private String username;
     private String password;
     private String role;
+    private String structure;
+    private String secteur;
 
     public User() {}
 
@@ -32,6 +34,8 @@ public class User implements UserDetails{
         this.username = username;
         this.password = password;
         this.role = role;
+        this.structure = null;
+        this.secteur = null;
     }
     
     public User(String username, String password) {
@@ -39,7 +43,14 @@ public class User implements UserDetails{
         this.password = password;
     }
 
-    // Getters and setters...
+    public User(String username, String password, String role, String structure, String secteur) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.structure = structure;
+        this.secteur = secteur;
+    }
+    
     public String getRole() {
   		return role;
   	}
@@ -67,10 +78,21 @@ public class User implements UserDetails{
         this.password = password;
     }
 
-    
+    public String getStructure() {
+        return structure;
+    }
+    public void setStructure(String structure) {
+        this.structure = structure;
+    }
+    public String getSecteur() {
+        return secteur;
+    }
+    public void setSecteur(String secteur) {
+        this.secteur = secteur;
+    }
+
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		// TODO Auto-generated method stub
 		if(role != null)
 			return List.of(new SimpleGrantedAuthority(role));
 		return List.of();
