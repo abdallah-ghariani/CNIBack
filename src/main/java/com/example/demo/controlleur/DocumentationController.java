@@ -3,6 +3,7 @@ package com.example.demo.controlleur;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,22 +30,23 @@ public class DocumentationController {
 	public List<Documentation> getAll() {
 		return documentationService.getAllDocumentations();
 	}
-
+	@PreAuthorize("hasAuthority('admin')")
 	@PostMapping()
 	public Documentation addDocumentation(@RequestBody DocumentationAddDto doc) {
 		return documentationService.addDocumentation(doc);
 	}
-
+	@PreAuthorize("hasAuthority('admin')")
 	@DeleteMapping("/{id}")
 	public void deleteDocumentation(@PathVariable String id) {
 		documentationService.deleteDocumentation(id);
 	}
+	@PreAuthorize("hasAuthority('admin')")
 
 	@PostMapping("/upload/{id}")
 	public void uploadFile(@RequestParam MultipartFile file, @PathVariable String id) {
 		documentationService.uploadFile(id, file);
 	}
-
+	@PreAuthorize("hasAuthority('admin')")
 	@GetMapping("/download/{id}")
 	public void getMethodName(@PathVariable String id, HttpServletResponse response) {
 		var file = documentationService.getFile(id);

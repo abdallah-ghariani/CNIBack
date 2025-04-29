@@ -3,6 +3,8 @@ package com.example.demo.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.querydsl.core.annotations.QueryEntity;
+@QueryEntity
 @Document(collection = "documentations")
 public class Documentation {
     @Id

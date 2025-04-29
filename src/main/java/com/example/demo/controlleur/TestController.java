@@ -7,6 +7,7 @@ import com.example.demo.entity.User;
 import java.security.Principal;
 import java.util.Collection;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +26,12 @@ public class TestController {
     @GetMapping("/roles")
     public Collection<? extends GrantedAuthority> getRoles(@AuthenticationPrincipal User user ) {
         return user.getAuthorities();
+    }
+    
+    @PreAuthorize("hasAuthority('admin')")
+    @GetMapping("/adminOnly")
+    public String getRole(@AuthenticationPrincipal User user ) {
+        return user.getRole();   
     }
     
 }
