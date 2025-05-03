@@ -16,9 +16,21 @@ public class Api {
     private String secteur;
     private String structure;
     private String description;
+    private double availability;
     private Date updatedAt;
-
+    private String approvalStatus; // pending, approved, rejected
+    
     public Api() {
+    }
+
+    public Api(String name, String description, String secteur, String structure, double availability, Date updatedAt) {
+        this.name = name;
+        this.description = description;
+        this.secteur = secteur;
+        this.structure = structure;
+        this.availability = availability;
+        this.updatedAt = updatedAt;
+        this.approvalStatus = "pending";
     }
 
     public String getId() {
@@ -61,6 +73,13 @@ public class Api {
         this.description = description;
     }
 
+    public double getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(double availability) {
+        this.availability = availability;
+    }
 
     public Date getUpdatedAt() {
         return updatedAt;
@@ -68,5 +87,13 @@ public class Api {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    public String getApprovalStatus() {
+        return approvalStatus;
+    }
+    
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
     }
 }
