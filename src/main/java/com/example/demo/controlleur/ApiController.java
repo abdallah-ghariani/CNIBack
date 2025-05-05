@@ -15,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.entity.Api;
+import com.example.demo.entity.User;
 import com.example.demo.servecies.ApiService;
 
 @RestController
@@ -68,10 +68,10 @@ public class ApiController {
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Double availability,
             @RequestParam(required = false) String approvalStatus,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date updatedAt) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date updatedAt,@AuthenticationPrincipal User user ) {
         logger.info("Retrieving all APIs, search: {}, name: {}, secteur: {}, structure: {}, description: {}, availability: {}, approvalStatus: {}, updatedAt: {}", 
             search, name, secteur, structure, description, availability, approvalStatus, updatedAt);
-        Page<Api> apiPage = apiService.getAll(pageable, search, name, secteur, structure, description, availability, updatedAt, approvalStatus);
+        Page<Api> apiPage = apiService.getAll(pageable, search, name, secteur, structure, description, availability, updatedAt, approvalStatus,user);
         logger.info("Retrieved {} APIs", apiPage.getContent().size());
         for (Api api : apiPage.getContent()) {
             logger.info("API ID: {}, Name: {}, Approval Status: {}", api.getId(), api.getName(), api.getApprovalStatus());
@@ -102,60 +102,19 @@ public class ApiController {
                 authoritiesLog.append("No authorities available");
             }
             logger.info(authoritiesLog.toString());
-            // Additional authentication details for debugging using Authentication object
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null) {
-                logger.info("Authentication details - IsAuthenticated: {}, Authorities: {}, Details: {}",
-                    authentication.isAuthenticated(), authentication.getAuthorities(), authentication.getDetails());
-            } else {
-                logger.warn("No authentication object found in SecurityContext");
-            }
             
             // Log input API data for debugging
-            logger.info("Input API data - Name: {}, Secteur: {}, Structure: {}, Description: {}, Availability: {}, ApprovalStatus: {}, UpdatedAt: {}",
-                api.getName(), api.getSecteur(), api.getStructure(), api.getDescription(), api.getAvailability(), api.getApprovalStatus(), api.getUpdatedAt());
+            logger.info("Input API data - Name: {}, Secteur: {}, Structure: {}, Description: {}, Availability: {}, UpdatedAt: {}",
+                api.getName(), api.getSecteur(), api.getStructure(), api.getDescription(), api.getAvailability(), api.getUpdatedAt());
             
             // Ensure minimal data for API creation to avoid validation failures
             if (api.getName() == null || api.getName().trim().isEmpty()) {
                 api.setName("Unnamed API");
                 logger.warn("API name was missing or empty, set to default value");
             }
-            // Set other required fields if missing
-            if (api.getUpdatedAt() == null) {
-                api.setUpdatedAt(new Date());
-                logger.info("UpdatedAt was missing, set to current date");
-            }
-            // Force pending status
-            api.setApprovalStatus("pending");
-            logger.info("Forcing API status to pending for all users as a temporary workaround");
             
-            // Check if user has admin role explicitly - very strict check (though not used due to forced pending status)
-            boolean isAdmin = false;
-            if (user != null && user.getAuthorities() != null) {
-                isAdmin = user.getAuthorities().stream()
-                    .anyMatch(authority -> {
-                        String auth = authority.getAuthority().toLowerCase();
-                        boolean match = auth.contains("admin");
-                        logger.info("Checking for admin authority: {}, IsAdmin: {}", auth, match);
-                        return match;
-                    });
-            }
-            
-            // Detailed logging for user roles
-            logger.info("User roles: {}", user.getAuthorities());
-            logger.info("Is user admin? {}", isAdmin);
-            
-            // Commented out original logic for reference
-            // If not explicitly admin, treat as provider and set to pending
-            // if (!isAdmin) {
-            //     api.setApprovalStatus("pending");
-            //     logger.info("User is NOT identified as admin (no admin in roles), setting API status to pending");
-            // } else {
-            //     api.setApprovalStatus("approved");
-            //     logger.info("User is identified as admin, setting API status to approved");
-            // }
-            
-            Api createdApi = apiService.addApi(api);
+            // Let the service handle the approval status based on user role
+            Api createdApi = apiService.addApi(api, user);
             logger.info("API created with ID: {}, Status: {}", createdApi.getId(), createdApi.getApprovalStatus());
             return new ResponseEntity<>(createdApi, HttpStatus.CREATED);
         } catch (Exception e) {

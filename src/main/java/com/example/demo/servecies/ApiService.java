@@ -14,6 +14,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.entity.Api;
+import com.example.demo.entity.QApi;
+import com.example.demo.entity.User;
 import com.example.demo.repository.ApiRepository;
 
 import org.slf4j.Logger;
@@ -32,7 +34,9 @@ public class ApiService {
      */
     public Page<Api> getAll(Pageable pageable, String search, String name, String secteur, 
                            String structure, String description, Double availability, 
-                           Date updatedAt, String approvalStatus) {
+                           Date updatedAt, String approvalStatus,User user) {
+        
+        QApi query =new QApi("api"); 
         
         Api probe = new Api();
         if (name != null) probe.setName(name);
@@ -92,25 +96,56 @@ public class ApiService {
      * Add a new API
      * 
      * @param api The API to add
+     * @param user The current user (can be null)
      * @return The saved API with generated ID
      */
-    public Api addApi(Api api) {
+    public Api addApi(Api api, User user) {
         try {
-            logger.info("Adding new API. Initial Approval Status: {}", api.getApprovalStatus());
+            logger.info("Adding new API. User: {}", user != null ? user.getUsername() : "Unknown");
+            
             // Ensure new API gets a unique ID
             api.setId(null);
-            if (api.getApprovalStatus() == null) {
-                api.setApprovalStatus("pending");
-                logger.info("Approval status was null, set to pending");
+            
+            // Set updatedAt to current date
+            api.setUpdatedAt(new Date());
+            
+            // Determine if user is admin
+            boolean isAdmin = false;
+            if (user != null && user.getAuthorities() != null) {
+                isAdmin = user.getAuthorities().stream()
+                    .anyMatch(authority -> authority.getAuthority().toLowerCase().contains("admin"));
+                logger.info("User role check - Username: {}, IsAdmin: {}", user.getUsername(), isAdmin);
             }
-            logger.info("Saving API with data - Name: {}, Secteur: {}, Structure: {}, Description: {}, Availability: {}, ApprovalStatus: {}, UpdatedAt: {}",
-                api.getName(), api.getSecteur(), api.getStructure(), api.getDescription(), api.getAvailability(), api.getApprovalStatus(), api.getUpdatedAt());
+            
+            // Set approval status based on user role
+            if (!isAdmin) {
+                // Non-admin users (providers) always get pending status
+                api.setApprovalStatus("pending");
+                logger.info("Provider submitted API will require admin approval");
+            } else if (api.getApprovalStatus() == null) {
+                // Admin users get auto-approved if not specified
+                api.setApprovalStatus("approved");
+                logger.info("Admin user creating API with auto-approved status");
+            } else {
+                // Admin specified a status, keep it
+                logger.info("Admin user creating API with specified status: {}", api.getApprovalStatus());
+            }
+            
+            // Validate required fields
+            if (api.getName() == null || api.getName().trim().isEmpty()) {
+                api.setName("Unnamed API");
+                logger.warn("API name was missing or empty, set to default value");
+            }
+            
+            logger.info("Saving API with data - Name: {}, Secteur: {}, Structure: {}, Description: {}, Availability: {}, ApprovalStatus: {}",
+                api.getName(), api.getSecteur(), api.getStructure(), api.getDescription(), api.getAvailability(), api.getApprovalStatus());
+            
             Api savedApi = apiRepository.save(api);
-            logger.info("API saved with ID: {}, Final Approval Status: {}", savedApi.getId(), savedApi.getApprovalStatus());
+            logger.info("API successfully saved with ID: {}, Final Approval Status: {}", savedApi.getId(), savedApi.getApprovalStatus());
             return savedApi;
         } catch (Exception e) {
-            logger.error("Error saving API to repository. Error message: {}. Input data - Name: {}, Secteur: {}, Structure: {}, Description: {}, Availability: {}, ApprovalStatus: {}, UpdatedAt: {}",
-                e.getMessage(), api.getName(), api.getSecteur(), api.getStructure(), api.getDescription(), api.getAvailability(), api.getApprovalStatus(), api.getUpdatedAt(), e);
+            logger.error("Error saving API. Error message: {}. Input data - Name: {}, Secteur: {}, Structure: {}",
+                e.getMessage(), api.getName(), api.getSecteur(), api.getStructure(), e);
             throw new RuntimeException("Failed to save API: " + e.getMessage(), e);
         }
     }
