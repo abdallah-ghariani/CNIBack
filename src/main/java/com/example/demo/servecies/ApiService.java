@@ -109,6 +109,12 @@ public class ApiService {
             // Set updatedAt to current date
             api.setUpdatedAt(new Date());
             
+            // Set the provider ID to the current user's ID
+            if (user != null) {
+                api.setProviderId(user.getId());
+                logger.info("Setting provider ID: {} for API", user.getId());
+            }
+            
             // Determine if user is admin
             boolean isAdmin = false;
             if (user != null && user.getAuthorities() != null) {
