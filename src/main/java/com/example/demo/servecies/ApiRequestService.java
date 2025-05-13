@@ -38,21 +38,32 @@ public class ApiRequestService {
     
     /**
      * Create a new API access request
+     * This method now supports both authenticated and unauthenticated users
      */
     public ApiRequest createRequest(ApiRequestDTO dto) {
-        // Get current user
-        User consumer = userService.getCurrentUser();
-        logger.info("Creating new API access request for API ID: {} by consumer: {}", 
-                  dto.getApiId(), consumer.getUsername());
-        
         // Verify the API exists
         Api api = apiRepository.findById(dto.getApiId())
             .orElseThrow(() -> new ResourceNotFoundException("API not found with ID: " + dto.getApiId()));
-           
+        
         // Create the request
         ApiRequest request = new ApiRequest();
         request.setApiId(dto.getApiId());
-        request.setConsumerId(consumer.getId());
+        
+        // Try to get current user if authenticated
+        String consumerId = null;
+        try {
+            User consumer = userService.getCurrentUser();
+            consumerId = consumer.getId();
+            logger.info("Creating new API access request for API ID: {} by authenticated consumer: {}", 
+                      dto.getApiId(), consumer.getUsername());
+        } catch (Exception e) {
+            // User is not authenticated or there was an error getting the current user
+            logger.info("Creating new API access request for API ID: {} by unauthenticated user with email: {}", 
+                      dto.getApiId(), dto.getEmail());
+        }
+        
+        // Set consumer ID if available
+        request.setConsumerId(consumerId);
         
         // Set the provider ID from the API
         String providerId = api.getProviderId();
@@ -148,6 +159,15 @@ public class ApiRequestService {
     }
     
     /**
+     * Get all API requests, regardless of status, consumer, or provider
+     * This is useful for admin views and testing
+     */
+    public List<ApiRequest> getAllRequests() {
+        logger.info("Getting all API requests");
+        return apiRequestRepository.findAll();
+    }
+    
+    /**
      * Get all API access requests made by the current authenticated consumer
      * Returns all requests regardless of status (pending, approved, rejected)
      */
@@ -207,16 +227,29 @@ public class ApiRequestService {
         Api api = apiRepository.findById(request.getApiId())
             .orElseThrow(() -> new ResourceNotFoundException("API not found with ID: " + request.getApiId()));
         
-        // Check if providerId is set and matches current user
-        String providerId = api.getProviderId();
-        if (providerId == null) {
-            // If providerId is not set, log a warning and use the request's providerId if available
-            logger.warn("API {} does not have a providerId set, using providerId from request", api.getId());
-            providerId = request.getProviderId();
+        // Check if current user is an admin (admins can approve any request)
+        boolean isAdmin = false;
+        if (provider != null && provider.getAuthorities() != null) {
+            isAdmin = provider.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().toLowerCase().contains("admin"));
+            logger.info("User role check - Username: {}, IsAdmin: {}", provider.getUsername(), isAdmin);
         }
         
-        if (providerId == null || !providerId.equals(provider.getId())) {
-            throw new UnauthorizedException("Not authorized to approve this request");
+        // If not admin, check if providerId matches current user
+        if (!isAdmin) {
+            // Check if providerId is set and matches current user
+            String providerId = api.getProviderId();
+            if (providerId == null) {
+                // If providerId is not set, log a warning and use the request's providerId if available
+                logger.warn("API {} does not have a providerId set, using providerId from request", api.getId());
+                providerId = request.getProviderId();
+            }
+            
+            if (providerId == null || !providerId.equals(provider.getId())) {
+                throw new UnauthorizedException("Not authorized to approve this request - must be API provider or admin");
+            }
+        } else {
+            logger.info("Admin user {} is bypassing providerId check for approval", provider.getUsername());
         }
         
         // Check if request is already processed

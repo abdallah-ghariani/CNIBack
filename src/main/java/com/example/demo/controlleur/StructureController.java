@@ -18,9 +18,6 @@ public class StructureController {
     private StructureService structureService;
  
   
-
-	@PreAuthorize("hasAuthority('admin')")
-
     @GetMapping("/{id}")
     public Structure getStructureById(@PathVariable String id) {
         return structureService.getStructureById(id);
@@ -42,7 +39,6 @@ public class StructureController {
         structureService.deleteStructure(id);
     }
 
-	@PreAuthorize("hasAuthority('admin')")
     @GetMapping
     public Page<Structure> getAllStructures(Pageable pageable) {
         return structureService.getAll(pageable);

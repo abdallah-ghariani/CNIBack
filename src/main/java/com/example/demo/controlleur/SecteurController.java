@@ -19,7 +19,6 @@ public class SecteurController {
     @Autowired
     private SecteurService secteurService;
     
-	@PreAuthorize("hasAuthority('admin')")
     @GetMapping
     public Page<Secteur> getAllSecteurs(Pageable pageable) {
         return secteurService.getAll(pageable);
@@ -31,8 +30,6 @@ public class SecteurController {
     public Secteur addSecteur(@RequestBody SecteurAddDto secteur) {
         return secteurService.addSecteur(secteur.getName());
     }
-	@PreAuthorize("hasAuthority('admin')")
-
     @GetMapping("/{id}")
     public Secteur getSecteurById(@PathVariable String id) {
         return secteurService.getSecteurById(id);

@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 import com.example.demo.dto.AuthDto;
 import com.example.demo.dto.AuthResponseDto;
 import com.example.demo.servecies.AuthenticationService;
@@ -41,11 +43,33 @@ public class AuthController{
     }
     
     @PostMapping("/refreshToken")
-    public AuthResponseDto refreshToken(@CookieValue(defaultValue = "") String refreshToken) {
-    	if(refreshToken.equals("")) {
-    		throw new AccessDeniedException("RefreshToken is missing");
-    	}
-    	return authService.refreshAccessToken(refreshToken);
+    public AuthResponseDto refreshToken(
+            @CookieValue(required = false) String refreshToken,
+            @RequestBody(required = false) Map<String, String> requestBody,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        
+        // Try to get token from different sources
+        String token = null;
+        
+        // 1. Check cookie first
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            token = refreshToken;
+        }
+        // 2. Check request body
+        else if (requestBody != null && requestBody.containsKey("refreshToken")) {
+            token = requestBody.get("refreshToken");
+        }
+        // 3. Check Authorization header (Bearer format)
+        else if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+        
+        // If no token found, throw exception
+        if (token == null || token.isEmpty()) {
+            throw new AccessDeniedException("RefreshToken is missing");
+        }
+        
+        return authService.refreshAccessToken(token);
     }
     
 }

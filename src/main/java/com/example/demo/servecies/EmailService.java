@@ -2,41 +2,61 @@ package com.example.demo.servecies;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.EmailRequestDto;
 import com.example.demo.dto.UserCredentialsDto;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class EmailService {
     
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
     
+    @Autowired
+    private JavaMailSender mailSender;
+
     /**
-     * This method would typically send an email, but for now it just logs the information
-     * In a production environment, you would integrate with an email service provider here
+     * Send an email using the configured SMTP server
      */
     public boolean sendPasswordEmail(EmailRequestDto emailRequest) {
         logger.info("Sending email to: {}", emailRequest.getTo());
-        logger.info("Subject: {}", emailRequest.getSubject());
-        logger.info("Content: {}", emailRequest.getContent());
         
-        // Here you would add the actual email sending logic using your preferred email service
-        // For example, using JavaMailSender or a third-party service like SendGrid
-        
-        return true; // Return true to indicate success
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            
+            helper.setTo(emailRequest.getTo());
+            helper.setSubject(emailRequest.getSubject());
+            helper.setText(emailRequest.getContent(), true); // true indicates HTML content
+            
+            mailSender.send(message);
+            logger.info("Email sent successfully to: {}", emailRequest.getTo());
+            return true;
+        } catch (MessagingException e) {
+            logger.error("Failed to send email to: {}", emailRequest.getTo(), e);
+            return false;
+        }
     }
     
     /**
-     * Creates a formatted email content with user credentials
+     * Creates a formatted HTML email content with user credentials
      */
     public String createUserCredentialsEmailContent(UserCredentialsDto credentials) {
-        return "Hello " + credentials.getUsername() + ",\n\n" +
-               "Your account has been created. Here are your login credentials:\n\n" +
-               "Username: " + credentials.getUsername() + "\n" +
-               "Password: " + credentials.getPassword() + "\n\n" +
-               "Please login with these credentials and change your password.\n\n" +
-               "Regards,\n" +
-               "CNI Team";
+        return "<html><body>" +
+               "<h2>Welcome to the CNI Platform</h2>" +
+               "<p>Hello " + credentials.getUsername() + ",</p>" +
+               "<p>Your account has been created. Here are your login credentials:</p>" +
+               "<p><strong>Username:</strong> " + credentials.getUsername() + "<br>" +
+               "<strong>Password:</strong> " + credentials.getPassword() + "</p>" +
+               "<p>Please login with these credentials and change your password as soon as possible.</p>" +
+               "<p>Regards,<br>" +
+               "CNI Team</p>" +
+               "</body></html>";
     }
 }
