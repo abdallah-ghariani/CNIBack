@@ -4,6 +4,8 @@ public class AddUserDto {
 	String username;
 	String password;
 	String role;
+	String secteurId;
+	String structureId;
 	
 	public String getUsername() {
 		return username;
@@ -24,5 +26,19 @@ public class AddUserDto {
 		this.role = role;
 	}
 	
+	public String getSecteurId() {
+		return secteurId;
+	}
 	
+	public void setSecteurId(String secteurId) {
+		this.secteurId = secteurId;
+	}
+	
+	public String getStructureId() {
+		return structureId;
+	}
+	
+	public void setStructureId(String structureId) {
+		this.structureId = structureId;
+	}
 }

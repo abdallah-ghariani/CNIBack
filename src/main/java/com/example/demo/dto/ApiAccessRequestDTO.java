@@ -1,27 +1,17 @@
 package com.example.demo.dto;
 
-import java.util.Date;
-
-/**
- * Data Transfer Object for API requests
- */
-public class ApiRequestDTO {
+public class ApiAccessRequestDTO {
     private String apiId;
     private String name;
     private String email;
     private String secteur;
     private String structure;
     private String message;
+    private String service;
+    private String description;
+    private String metadata;
     
-    // Additional fields
-    private String service;        // Required for service filtering
-    private String apiName;        // Required for new API creation
-    private String description;    // Detailed API information
-    private String metadata;       // JSON string with API configuration
-    private Date requestDate;      // When the request was made
-    private String status;         // Request status (pending, approved, rejected)
-    
-    public ApiRequestDTO() {
+    public ApiAccessRequestDTO() {
     }
     
     public String getApiId() {
@@ -75,56 +65,24 @@ public class ApiRequestDTO {
     public String getService() {
         return service;
     }
-
+    
     public void setService(String service) {
         this.service = service;
     }
-
-    public String getApiName() {
-        return apiName;
-    }
-
-    public void setApiName(String apiName) {
-        this.apiName = apiName;
-    }
-
+    
     public String getDescription() {
         return description;
     }
-
+    
     public void setDescription(String description) {
         this.description = description;
     }
-
+    
     public String getMetadata() {
         return metadata;
     }
-
+    
     public void setMetadata(String metadata) {
         this.metadata = metadata;
-    }
-
-    public Date getRequestDate() {
-        return requestDate;
-    }
-
-    public void setRequestDate(Date requestDate) {
-        this.requestDate = requestDate;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    @Override
-    public String toString() {
-        return "ApiRequestDTO [apiId=" + apiId + ", name=" + name + ", email=" + email + ", secteur=" + secteur
-                + ", structure=" + structure + ", message=" + message + ", service=" + service + ", apiName=" + apiName
-                + ", description=" + description + ", metadata=" + metadata + ", requestDate=" + requestDate
-                + ", status=" + status + "]";
     }
 }

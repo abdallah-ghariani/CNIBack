@@ -7,9 +7,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.querydsl.core.annotations.QueryEntity;
 
-@Document(collection = "api_requests")
+@Document(collection = "api_access_requests")
 @QueryEntity
-public class ApiRequest {
+public class ApiAccessRequest {
     @Id
     private String id;
     private String apiId;
@@ -27,12 +27,12 @@ public class ApiRequest {
     private String description;  // Detailed API information
     private String metadata;     // JSON string with API configuration
     
-    public ApiRequest() {
+    public ApiAccessRequest() {
         this.requestDate = new Date();
         this.status = "pending";
     }
     
-    public ApiRequest(String apiId, String consumerId, String name, String email, 
+    public ApiAccessRequest(String apiId, String consumerId, String name, String email, 
                      String secteur, String structure, String message, String apiName) {
         this.apiId = apiId;
         this.consumerId = consumerId;
@@ -46,7 +46,7 @@ public class ApiRequest {
         this.apiName = apiName;
     }
     
-    public ApiRequest(String apiId, String consumerId, String name, String email, 
+    public ApiAccessRequest(String apiId, String consumerId, String name, String email, 
                      String secteur, String structure, String message, String apiName,
                      String service, String description, String metadata) {
         this(apiId, consumerId, name, email, secteur, structure, message, apiName);

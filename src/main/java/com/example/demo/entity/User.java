@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.querydsl.core.annotations.QueryEntity;
+import com.example.demo.entity.Secteur;
 
 @Document(collection = "users")
 @QueryEntity
@@ -27,17 +28,16 @@ public class User implements UserDetails{
     private String username;
     private String password;
     
-    // Legacy single role field (maintained for backward compatibility)
+    // Role of the user (e.g., "user", "admin")
     private String role;
-    
-    // Multi-role support
-    private boolean isAdmin;
-    private boolean isProvider;
-    private boolean isConsumer;
     
     // Relationship with Structure
     @DocumentReference
     private Structure structure;
+    
+    // User's sector
+    @DocumentReference
+    private Secteur secteur;
 
     public User() {}
 
@@ -45,20 +45,15 @@ public class User implements UserDetails{
         this.username = username;
         this.password = password;
         this.role = role;
-        
-        // Set role flags based on the legacy role field
-        if ("Admin".equals(role)) {
-            this.isAdmin = true;
-        } else if ("Provider".equals(role)) {
-            this.isProvider = true;
-        } else if ("Consumer".equals(role)) {
-            this.isConsumer = true;
-        }
+        this.secteur = null;
+        this.structure = null;
     }
     
     public User(String username, String password) {
         this.username = username;
         this.password = password;
+        this.secteur = null;
+        this.structure = null;
     }
 
     // Getters and setters...
@@ -68,40 +63,15 @@ public class User implements UserDetails{
 
   	public void setRole(String role) {
   		this.role = role;
-  		
-  		// Update role flags when setting legacy role field
-  		if ("Admin".equals(role)) {
-            this.isAdmin = true;
-        } else if ("Provider".equals(role)) {
-            this.isProvider = true;
-        } else if ("Consumer".equals(role)) {
-            this.isConsumer = true;
-        }
   	}
   	
-  	// New role flag getters and setters
+  	// Role helper methods
   	public boolean isAdmin() {
-  		return isAdmin;
+  		return "admin".equalsIgnoreCase(role);
   	}
   	
-  	public void setAdmin(boolean isAdmin) {
-  		this.isAdmin = isAdmin;
-  	}
-  	
-  	public boolean isProvider() {
-  		return isProvider;
-  	}
-  	
-  	public void setProvider(boolean isProvider) {
-  		this.isProvider = isProvider;
-  	}
-  	
-  	public boolean isConsumer() {
-  		return isConsumer;
-  	}
-  	
-  	public void setConsumer(boolean isConsumer) {
-  		this.isConsumer = isConsumer;
+  	public boolean isUser() {
+  		return "user".equalsIgnoreCase(role);
   	}
   	
   	// Structure relationship getters and setters
@@ -111,6 +81,15 @@ public class User implements UserDetails{
   	
   	public void setStructure(Structure structure) {
   		this.structure = structure;
+  	}
+  	
+  	// Sector getters and setters
+  	public Secteur getSecteur() {
+  		return secteur;
+  	}
+  	
+  	public void setSecteur(Secteur secteur) {
+  		this.secteur = secteur;
   	}
 
     public String getId() {
@@ -137,20 +116,9 @@ public class User implements UserDetails{
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		List<SimpleGrantedAuthority> authorities = new ArrayList<>();
 		
-		// Add legacy role if present
+		// Add role authority if present
 		if(role != null) {
 			authorities.add(new SimpleGrantedAuthority(role));
-		}
-		
-		// Add role-based authorities
-		if(isAdmin) {
-			authorities.add(new SimpleGrantedAuthority("Admin"));
-		}
-		if(isProvider) {
-			authorities.add(new SimpleGrantedAuthority("Provider"));
-		}
-		if(isConsumer) {
-			authorities.add(new SimpleGrantedAuthority("Consumer"));
 		}
 		
 		return authorities;

@@ -72,14 +72,46 @@ public class ApiRequestService {
         }
         request.setProviderId(providerId);
         
+        // Set basic fields
         request.setName(dto.getName());
         request.setEmail(dto.getEmail());
         request.setSecteur(dto.getSecteur());
         request.setStructure(dto.getStructure());
         request.setMessage(dto.getMessage());
-        request.setRequestDate(new Date());
-        request.setStatus("pending");
-        request.setApiName(api.getName());
+        
+        // Set additional fields from updated DTO
+        request.setService(dto.getService());       // Service filtering
+        
+        // Handle API name - if not provided in DTO, use API object name
+        if (dto.getApiName() != null && !dto.getApiName().isEmpty()) {
+            request.setApiName(dto.getApiName());
+        } else {
+            request.setApiName(api.getName());
+        }
+        
+        // Set description if provided
+        if (dto.getDescription() != null) {
+            request.setDescription(dto.getDescription());
+        }
+        
+        // Set metadata if provided
+        if (dto.getMetadata() != null) {
+            request.setMetadata(dto.getMetadata());
+        }
+        
+        // Set request date (either from DTO or current date)
+        if (dto.getRequestDate() != null) {
+            request.setRequestDate(dto.getRequestDate());
+        } else {
+            request.setRequestDate(new Date());
+        }
+        
+        // Set status (either from DTO or default to "pending")
+        if (dto.getStatus() != null) {
+            request.setStatus(dto.getStatus());
+        } else {
+            request.setStatus("pending");
+        }
         
         return apiRequestRepository.save(request);
     }

@@ -33,37 +33,74 @@ public class ApiService {
      * Get all APIs with optional filtering
      */
     public Page<Api> getAll(Pageable pageable, String search, String name, String secteur, 
-                           String structure, String description, Double availability, 
-                           Date updatedAt, String approvalStatus,User user) {
+                           String structure, String service, String description, Double availability, 
+                           Date updatedAt, String approvalStatus, User user) {
         
-        QApi query =new QApi("api"); 
+        logger.info("Getting APIs with filters - search: {}, name: {}, secteur: {}, structure: {}, service: {}, approvalStatus: {}",
+                search, name, secteur, structure, service, approvalStatus);
+                
+        QApi query = new QApi("api"); 
         
+        // Two-step filtering approach for complex queries
+        // First create a basic probe for exact/specific field matching
         Api probe = new Api();
+        boolean hasServiceFilter = false;
+        
         if (name != null) probe.setName(name);
         if (secteur != null) probe.setSecteur(secteur);
         if (structure != null) probe.setStructure(structure);
+        if (service != null && !service.trim().isEmpty()) {
+            logger.info("Filtering APIs by service/providerId: '{}'", service);
+            probe.setProviderId(service); // Filter by providerId when service is specified
+            hasServiceFilter = true;
+        }
         if (description != null) probe.setDescription(description);
         if (availability != null) probe.setAvailability(availability);
         if (updatedAt != null) probe.setUpdatedAt(updatedAt);
         if (approvalStatus != null) probe.setApprovalStatus(approvalStatus);
         
+        // Build the matcher with appropriate settings
         ExampleMatcher matcher = ExampleMatcher.matching()
                 .withIgnoreNullValues()
                 .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
                 .withIgnoreCase();
                 
+        // Add explicit matchers for each field we want to match partially
+        matcher = matcher.withMatcher("name", match -> match.contains().ignoreCase())
+                        .withMatcher("description", match -> match.contains().ignoreCase())
+                        .withMatcher("secteur", match -> match.contains().ignoreCase())
+                        .withMatcher("structure", match -> match.contains().ignoreCase());
+                        
+        // For providerId/service we want exact matching
+        if (hasServiceFilter) {
+            matcher = matcher.withMatcher("providerId", match -> match.exact());
+        }
+                
+        // If we have a global search term, use it across multiple fields
         if (search != null && !search.isEmpty()) {
-            matcher = matcher.withMatcher("name", match -> match.contains().ignoreCase())
-                           .withMatcher("description", match -> match.contains().ignoreCase())
-                           .withMatcher("secteur", match -> match.contains().ignoreCase())
-                           .withMatcher("structure", match -> match.contains().ignoreCase());
-            probe.setName(search);
-            probe.setDescription(search);
-            probe.setSecteur(search);
-            probe.setStructure(search);
+            // Here we need a different approach - we'll use the search term for multiple fields
+            // but keep any service filtering intact
+            Api searchProbe = new Api();
+            searchProbe.setName(search);
+            searchProbe.setDescription(search);
+            searchProbe.setSecteur(search);
+            searchProbe.setStructure(search);
+            
+            // If we have a service filter, maintain it
+            if (hasServiceFilter) {
+                searchProbe.setProviderId(service);
+            }
+            
+            // Use the search probe instead
+            probe = searchProbe;
         }
         
-        Page<Api> apiPage = apiRepository.findAll(Example.of(probe, matcher), pageable);
+        // Log the final query for debugging
+        Example<Api> example = Example.of(probe, matcher);
+        logger.info("Final query filter - probe: {}, matcher: {}", probe, matcher);
+        
+        // Execute the query
+        Page<Api> apiPage = apiRepository.findAll(example, pageable);
         // Set default approval status for existing APIs without this field
         apiPage.getContent().forEach(api -> {
             if (api.getApprovalStatus() == null) {

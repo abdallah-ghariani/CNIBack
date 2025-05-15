@@ -14,6 +14,8 @@ import java.util.function.Function;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.entity.Secteur;
+import com.example.demo.entity.Structure;
 import com.example.demo.entity.User;
 
 @Service
@@ -34,12 +36,27 @@ public class JwtService {
     }
 
     public String generateToken(User user) {
-    	
-    	Map<String, Object> clain=new HashMap<>();
-    	
-    		clain.put("role", user.getRole());
-    	
-        return generateToken(clain, user);
+        Map<String, Object> claims = new HashMap<>();
+        
+        // Add standard claims
+        claims.put("username", user.getUsername());
+        claims.put("role", user.getRole());
+        
+        // Add secteur claim if available
+        if (user.getSecteur() != null) {
+            Secteur secteur = user.getSecteur();
+            claims.put("secteur", secteur.getId());       // ID for backend use
+            claims.put("secteurName", secteur.getName()); // Name for UI display
+        }
+        
+        // Add structure claim if available
+        if (user.getStructure() != null) {
+            Structure structure = user.getStructure();
+            claims.put("structure", structure.getId());       // ID for backend use
+            claims.put("structureName", structure.getName()); // Name for UI display
+        }
+        
+        return generateToken(claims, user);
     }
 
     public String generateToken(Map<String, Object> extraClaims, User user) {

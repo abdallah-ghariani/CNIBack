@@ -65,13 +65,14 @@ public class ApiController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String secteur,
             @RequestParam(required = false) String structure,
+            @RequestParam(required = false) String service,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Double availability,
             @RequestParam(required = false) String approvalStatus,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date updatedAt,@AuthenticationPrincipal User user ) {
-        logger.info("Retrieving all APIs, search: {}, name: {}, secteur: {}, structure: {}, description: {}, availability: {}, approvalStatus: {}, updatedAt: {}", 
-            search, name, secteur, structure, description, availability, approvalStatus, updatedAt);
-        Page<Api> apiPage = apiService.getAll(pageable, search, name, secteur, structure, description, availability, updatedAt, approvalStatus,user);
+        logger.info("Retrieving all APIs, search: {}, name: {}, secteur: {}, structure: {}, service: {}, description: {}, availability: {}, approvalStatus: {}, updatedAt: {}", 
+            search, name, secteur, structure, service, description, availability, approvalStatus, updatedAt);
+        Page<Api> apiPage = apiService.getAll(pageable, search, name, secteur, structure, service, description, availability, updatedAt, approvalStatus, user);
         logger.info("Retrieved {} APIs", apiPage.getContent().size());
         for (Api api : apiPage.getContent()) {
             logger.info("API ID: {}, Name: {}, Approval Status: {}", api.getId(), api.getName(), api.getApprovalStatus());

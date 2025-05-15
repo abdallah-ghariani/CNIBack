@@ -1,7 +1,11 @@
 package com.example.demo.controlleur;
 
 import com.example.demo.dto.AddUserDto;
+import com.example.demo.entity.Secteur;
+import com.example.demo.entity.Structure;
 import com.example.demo.entity.User;
+import com.example.demo.repository.SecteurRepository;
+import com.example.demo.repository.StructureRepository;
 import com.example.demo.servecies.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -17,10 +21,36 @@ public class UserController {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private SecteurRepository secteurRepository;
+	
+	@Autowired
+	private StructureRepository structureRepository;
 	@PreAuthorize("hasAuthority('admin')")
 	@PostMapping()
 	public User addUser(@RequestBody AddUserDto user) {
-		return userService.addUser(user.getUsername(), user.getPassword(), user.getRole());
+		// Basic validation
+		if (user.getUsername() == null || user.getPassword() == null || user.getRole() == null) {
+			throw new IllegalArgumentException("Username, password, and role are required");
+		}
+		
+		// Get secteur and structure if IDs are provided
+		Secteur secteur = null;
+		Structure structure = null;
+		
+		if (user.getSecteurId() != null && !user.getSecteurId().isEmpty()) {
+			secteur = secteurRepository.findById(user.getSecteurId())
+				.orElse(null);
+		}
+		
+		if (user.getStructureId() != null && !user.getStructureId().isEmpty()) {
+			structure = structureRepository.findById(user.getStructureId())
+				.orElse(null);
+		}
+		
+		// Create user with all available information
+		return userService.addUser(user.getUsername(), user.getPassword(), user.getRole(), secteur, structure);
 	}
 	@PreAuthorize("hasAuthority('admin')")
 	@GetMapping("/{id}")
