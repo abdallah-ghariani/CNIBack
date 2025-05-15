@@ -173,13 +173,12 @@ public class ApiAccessRequestController {
     /**
      * Approve an API access request
      * Only the provider of the API can approve a request
-     * Returns user credentials (email, username, password) for the newly created account
      */
     @PostMapping("/{requestId}/approve")
-    public ResponseEntity<UserCredentialsDto> approveRequest(@PathVariable String requestId) {
+    public ResponseEntity<ApiAccessRequest> approveRequest(@PathVariable String requestId) {
         logger.info("Approving API access request ID: {}", requestId);
-        UserCredentialsDto credentials = apiAccessRequestService.approveRequest(requestId);
-        return ResponseEntity.ok(credentials);
+        ApiAccessRequest approvedRequest = apiAccessRequestService.approveRequest(requestId);
+        return ResponseEntity.ok(approvedRequest);
     }
     
     /**

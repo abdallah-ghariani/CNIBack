@@ -14,12 +14,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.demo.dto.UserCredentialsDto;
 import com.example.demo.dto.UserDTO;
 import com.example.demo.entity.ApiAccessRequest;
 import com.example.demo.entity.QUser;
 import com.example.demo.entity.Secteur;
 import com.example.demo.entity.Structure;
 import com.example.demo.entity.User;
+import com.example.demo.repository.ApiAccessRequestRepository;
 import com.example.demo.repository.SecteurRepository;
 import com.example.demo.repository.StructureRepository;
 import com.example.demo.repository.UserRepository;
@@ -39,6 +41,9 @@ public class UserService implements UserDetailsService {
 	
 	@Autowired
 	private StructureRepository structureRepository;
+	
+	@Autowired
+	private ApiAccessRequestRepository accessRequestRepository;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -162,12 +167,13 @@ public class UserService implements UserDetailsService {
 	 * If the user already exists with the given email, update their role to include consumer access
 	 * 
 	 * @param request The approved API access request
-	 * @return The updated API access request with consumer information
+	 * @return UserCredentialsDto containing the user credentials
 	 */
-	public ApiAccessRequest createConsumerAccount(ApiAccessRequest request) {
+	public UserCredentialsDto createConsumerAccount(ApiAccessRequest request) {
 		// Check if user already exists with this email
 		String email = request.getEmail();
 		String username = email; // Use email as username
+		String temporaryPassword = null;
 		
 		User consumer = null;
 		try {
@@ -181,19 +187,29 @@ public class UserService implements UserDetailsService {
 			}
 		} catch (UsernameNotFoundException e) {
 			// User doesn't exist, create new consumer account
-			String password = generateTemporaryPassword();
-			consumer = new User(username, passwordEncoder.encode(password), "consumer");
+			temporaryPassword = generateTemporaryPassword();
+			consumer = new User(username, passwordEncoder.encode(temporaryPassword), "consumer");
 			
 			// Set secteur if available
 			if (request.getSecteur() != null && !request.getSecteur().isEmpty()) {
 				secteurRepository.findById(request.getSecteur())
-					.ifPresent(consumer::setSecteur);
+					.ifPresentOrElse(
+						consumer::setSecteur,
+						() -> {
+							throw new IllegalArgumentException("Invalid Secteur ID: " + request.getSecteur());
+						}
+					);
 			}
 			
 			// Set structure if available
 			if (request.getStructure() != null && !request.getStructure().isEmpty()) {
 				structureRepository.findById(request.getStructure())
-					.ifPresent(consumer::setStructure);
+					.ifPresentOrElse(
+						consumer::setStructure,
+						() -> {
+							throw new IllegalArgumentException("Invalid Structure ID: " + request.getStructure());
+						}
+					);
 			}
 			
 			consumer = userRepository.save(consumer);
@@ -205,7 +221,11 @@ public class UserService implements UserDetailsService {
 		// Update consumer ID in the request
 		request.setConsumerId(consumer.getId());
 		
-		return request;
+		// Save the updated request
+		accessRequestRepository.save(request);
+		
+		// Return user credentials
+		return new UserCredentialsDto(email, username, temporaryPassword);
 	}
 	
 	/**

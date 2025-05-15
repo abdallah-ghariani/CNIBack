@@ -97,7 +97,7 @@ public class ApiAccessRequestService {
      * Approve an API access request
      * Only the provider of the API can approve a request
      */
-    public UserCredentialsDto approveRequest(String requestId) {
+    public ApiAccessRequest approveRequest(String requestId) {
         ApiAccessRequest request = getRequestById(requestId);
         
         // Check if current user is the provider of the API
@@ -108,10 +108,7 @@ public class ApiAccessRequestService {
         
         // Update request status
         request.setStatus("approved");
-        accessRequestRepository.save(request);
-        
-        // Create consumer account if needed
-        return userService.createConsumerAccount(request);
+        return accessRequestRepository.save(request);
     }
     
     /**
