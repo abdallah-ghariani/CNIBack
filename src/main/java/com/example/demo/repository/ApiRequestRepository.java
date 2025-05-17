@@ -2,6 +2,8 @@ package com.example.demo.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -30,4 +32,7 @@ public interface ApiRequestRepository extends MongoRepository<ApiRequest, String
     
     // Find all requests where the API ID is in the given list
     List<ApiRequest> findByApiIdIn(List<String> apiIds);
+    
+    // Find all requests by sector and status with pagination
+    Page<ApiRequest> findBySecteurAndStatus(String secteur, String status, Pageable pageable);
 }

@@ -1,5 +1,7 @@
 package com.example.demo.servecies;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
@@ -145,9 +147,30 @@ public class UserService implements UserDetailsService {
 
 	@Override
 	public User loadUserByUsername(String username) throws UsernameNotFoundException {
-		return userRepository.findByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+		User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found with username: " + username);
+        }
+        return user;
 	}
+    
+    /**
+     * Find a user by username
+     * @param username the username to search for
+     * @return an Optional containing the user if found
+     */
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+    
+    /**
+     * Find a user by ID
+     * @param id the user ID to search for
+     * @return an Optional containing the user if found
+     */
+    public Optional<User> findById(String id) {
+        return userRepository.findById(id);
+    }
 	
 	/**
 	 * Get the currently authenticated user

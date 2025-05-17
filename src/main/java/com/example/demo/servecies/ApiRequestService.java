@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.dto.ApiCreationRequestDTO;
 import com.example.demo.dto.ApiRequestDTO;
 import com.example.demo.dto.UserCredentialsDto;
 import com.example.demo.entity.Api;
@@ -64,13 +65,7 @@ public class ApiRequestService {
         
         // Set consumer ID if available
         request.setConsumerId(consumerId);
-        
-        // Set the provider ID from the API
-        String providerId = api.getProviderId();
-        if (providerId == null) {
-            logger.warn("API with ID {} does not have a provider ID set", dto.getApiId());
-        }
-        request.setProviderId(providerId);
+    
         
         // Set basic fields
         request.setName(dto.getName());
@@ -81,23 +76,8 @@ public class ApiRequestService {
         
         // Set additional fields from updated DTO
         request.setService(dto.getService());       // Service filtering
+     
         
-        // Handle API name - if not provided in DTO, use API object name
-        if (dto.getApiName() != null && !dto.getApiName().isEmpty()) {
-            request.setApiName(dto.getApiName());
-        } else {
-            request.setApiName(api.getName());
-        }
-        
-        // Set description if provided
-        if (dto.getDescription() != null) {
-            request.setDescription(dto.getDescription());
-        }
-        
-        // Set metadata if provided
-        if (dto.getMetadata() != null) {
-            request.setMetadata(dto.getMetadata());
-        }
         
         // Set request date (either from DTO or current date)
         if (dto.getRequestDate() != null) {
@@ -386,5 +366,173 @@ public class ApiRequestService {
         request.setStatus("rejected");
         
         return apiRequestRepository.save(request);
+    }
+    
+    /**
+     * Create a new API creation request
+     * This is used when a user wants to submit a request to create a new API
+     * The API is not created immediately but only when approved by an admin
+     * 
+     * @param dto The DTO containing details for the new API
+     * @return The created API creation request
+     */
+    public ApiRequest createApiCreationRequest(ApiCreationRequestDTO dto) {
+        logger.info("Creating new API creation request with data: {}", dto);
+        
+        // Get the current user
+        User user = userService.getCurrentUser();
+        
+        // Create a new request
+        ApiRequest request = new ApiRequest();
+        
+        // Set basic information
+        request.setName(dto.getRequesterName());
+        request.setEmail(dto.getRequesterEmail());
+        request.setSecteur(dto.getSecteur());
+        request.setStructure(dto.getStructure());
+        request.setMessage(dto.getMessage() != null ? dto.getMessage() : "Request to create new API");
+        
+        // Set API details
+        request.setApiName(dto.getApiName());
+        request.setDescription(dto.getApiDescription());
+        
+        // Build metadata with additional API details
+        StringBuilder metadata = new StringBuilder();
+        if (dto.getApiEndpoint() != null) {
+            metadata.append("Endpoint: ").append(dto.getApiEndpoint()).append("\n");
+        }
+        if (dto.getApiVersion() != null) {
+            metadata.append("Version: ").append(dto.getApiVersion()).append("\n");
+        }
+        if (dto.getApiDocumentation() != null) {
+            metadata.append("Documentation: ").append(dto.getApiDocumentation()).append("\n");
+        }
+        request.setMetadata(metadata.toString());
+        
+        // Set the requester as provider
+        if (user != null) {
+            request.setProviderId(user.getId());
+        }
+        
+        // Mark as a creation request by setting apiId to null
+        request.setApiId(null);
+        
+        // Default status is pending
+        request.setStatus("pending");
+        request.setRequestDate(new Date());
+        
+        // Save and return the request
+        return apiRequestRepository.save(request);
+    }
+    
+    /**
+     * Approve an API creation request
+     * This will create a new API with 'approved' status
+     * Only admins can approve creation requests
+     * 
+     * @param requestId The ID of the API creation request to approve
+     * @param feedback Optional feedback message
+     * @return The created API
+     */
+    public Api approveApiCreationRequest(String requestId, String feedback) {
+        logger.info("Approving API creation request ID: {}", requestId);
+        
+        // Find the request
+        ApiRequest request = apiRequestRepository.findById(requestId)
+            .orElseThrow(() -> new ResourceNotFoundException("API creation request not found with ID: " + requestId));
+        
+        // Check if it's a pending request
+        if (!"pending".equals(request.getStatus())) {
+            throw new BadRequestException("Cannot approve request with status: " + request.getStatus());
+        }
+        
+        try {
+            // Create a new API based on the request data
+            Api newApi = new Api();
+            newApi.setName(request.getApiName());
+            newApi.setDescription(request.getDescription());
+            
+            // Add additional details from metadata if available
+            if (request.getMetadata() != null && !request.getMetadata().isEmpty()) {
+                newApi.setDescription(newApi.getDescription() + "\n\n" + request.getMetadata());
+            }
+            
+            // Set structure and sector information
+            newApi.setSecteur(request.getSecteur());
+            newApi.setStructure(request.getStructure());
+            
+            // Set API provider to the original requester
+            newApi.setProviderId(request.getProviderId());
+            
+            // Set approval status directly to "approved"
+            newApi.setApprovalStatus("approved");
+            
+            // Default availability
+            newApi.setAvailability(100.0);
+            newApi.setUpdatedAt(new Date());
+            
+            // Save the new API
+            Api savedApi = apiRepository.save(newApi);
+            
+            // Update the request status
+            request.setStatus("approved");
+            request.setApiId(savedApi.getId()); // Link to the newly created API
+            apiRequestRepository.save(request);
+            
+            logger.info("Created new API from request: {} with ID: {}", requestId, savedApi.getId());
+            
+            return savedApi;
+        } catch (Exception e) {
+            logger.error("Error approving API creation request: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create API from request: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Reject an API creation request
+     * Only admins can reject creation requests
+     * 
+     * @param requestId The ID of the API creation request to reject
+     * @param feedback Optional feedback message
+     * @return The rejected request
+     */
+    public ApiRequest rejectApiCreationRequest(String requestId, String feedback) {
+        logger.info("Rejecting API creation request ID: {}", requestId);
+        
+        // Find the request
+        ApiRequest request = apiRequestRepository.findById(requestId)
+            .orElseThrow(() -> new ResourceNotFoundException("API creation request not found with ID: " + requestId));
+        
+        // Check if it's a pending request
+        if (!"pending".equals(request.getStatus())) {
+            throw new BadRequestException("Cannot reject request with status: " + request.getStatus());
+        }
+        
+        // Update status to rejected
+        request.setStatus("rejected");
+        
+        // Store feedback in metadata if provided
+        if (feedback != null && !feedback.isEmpty()) {
+            String currentMetadata = request.getMetadata() != null ? request.getMetadata() : "";
+            request.setMetadata(currentMetadata + "\n\nRejection Reason: " + feedback);
+        }
+        
+        // Save and return the updated request
+        return apiRequestRepository.save(request);
+    }
+    
+    /**
+     * Get all pending API creation requests
+     * This is used by admins to view requests that need approval
+     * 
+     * @return List of pending API creation requests
+     */
+    public List<ApiRequest> getPendingApiCreationRequests() {
+        logger.info("Getting all pending API creation requests");
+        
+        // Find requests where apiId is null (creation requests) and status is "pending"
+        return apiRequestRepository.findAll().stream()
+            .filter(req -> req.getApiId() == null && "pending".equals(req.getStatus()))
+            .collect(Collectors.toList());
     }
 }

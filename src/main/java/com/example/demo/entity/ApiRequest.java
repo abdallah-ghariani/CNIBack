@@ -1,11 +1,13 @@
 package com.example.demo.entity;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.querydsl.core.annotations.QueryEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Document(collection = "api_requests")
 @QueryEntity
@@ -21,15 +23,22 @@ public class ApiRequest {
     private String structure;
     private String message;
     private Date requestDate;
-    private String status;       // pending/approved/rejected
-    private String apiName;      // Denormalized for convenience
-    private String service;      // Required for service filtering
-    private String description;  // Detailed API information
-    private String metadata;     // JSON string with API configuration
+    private String status;               // pending/approved/rejected
+    private String apiName;              // Denormalized for convenience
+    private String service;              // Required for service filtering
+    private String description;          // Detailed API information
+    private String metadata;             // JSON string with API configuration
+    private String approvedBy;           // Username of the approver
+    private LocalDateTime approvalDate;  // When the request was approved/rejected
+    private String feedback;             // Optional feedback from approver/rejector
+    private String requesterSector;      // Sector of the user who made the request
+    private String apiSector;            // Sector of the API being requested
     
     public ApiRequest() {
         this.requestDate = new Date();
         this.status = "pending";
+        this.requesterSector = "";
+        this.apiSector = "";
     }
     
     public ApiRequest(String apiId, String consumerId, String name, String email, 
@@ -141,6 +150,47 @@ public class ApiRequest {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+    
+    public String getApprovedBy() {
+        return approvedBy;
+    }
+    
+    public void setApprovedBy(String approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    public LocalDateTime getApprovalDate() {
+        return approvalDate;
+    }
+    
+    public void setApprovalDate(LocalDateTime approvalDate) {
+        this.approvalDate = approvalDate;
+    }
+    
+    public String getFeedback() {
+        return feedback;
+    }
+    
+    public void setFeedback(String feedback) {
+        this.feedback = feedback;
+    }
+    
+    public String getRequesterSector() {
+        return requesterSector;
+    }
+    
+    public void setRequesterSector(String requesterSector) {
+        this.requesterSector = requesterSector;
+    }
+    
+    public String getApiSector() {
+        return apiSector;
+    }
+    
+    public void setApiSector(String apiSector) {
+        this.apiSector = apiSector;
     }
 
     public String getApiName() {

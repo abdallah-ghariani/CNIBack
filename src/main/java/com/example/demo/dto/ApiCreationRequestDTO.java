@@ -11,6 +11,7 @@ public class ApiCreationRequestDTO {
     private String apiEndpoint;
     private String apiDocumentation;
     private String apiVersion;
+    private String service;
     
     // Requester details
     private String requesterName;
@@ -60,6 +61,14 @@ public class ApiCreationRequestDTO {
 
     public void setApiVersion(String apiVersion) {
         this.apiVersion = apiVersion;
+    }
+    
+    public String getService() {
+        return service;
+    }
+    
+    public void setService(String service) {
+        this.service = service;
     }
 
     public String getRequesterName() {

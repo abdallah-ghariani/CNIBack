@@ -89,41 +89,21 @@ public class ApiController {
     }
     
     /**
-     * Create a new API - for providers it sets status to pending
+     * Get an API by code (ID)
+     * This endpoint allows retrieving an API using the 'code/{id}' path format
      */
-    @PostMapping
-    public ResponseEntity<Api> createApi(@RequestBody Api api, @AuthenticationPrincipal User user) {
-        try {
-            logger.info("Creating new API. User: {}, Roles: {}", user != null ? user.getUsername() : "Unknown", user != null ? user.getAuthorities() : "No user");
-            // Log all authorities explicitly for debugging
-            StringBuilder authoritiesLog = new StringBuilder("User authorities: ");
-            if (user != null && user.getAuthorities() != null) {
-                user.getAuthorities().forEach(auth -> authoritiesLog.append(auth.getAuthority()).append(", "));
-            } else {
-                authoritiesLog.append("No authorities available");
-            }
-            logger.info(authoritiesLog.toString());
-            
-            // Log input API data for debugging
-            logger.info("Input API data - Name: {}, Secteur: {}, Structure: {}, Description: {}, Availability: {}, UpdatedAt: {}",
-                api.getName(), api.getSecteur(), api.getStructure(), api.getDescription(), api.getAvailability(), api.getUpdatedAt());
-            
-            // Ensure minimal data for API creation to avoid validation failures
-            if (api.getName() == null || api.getName().trim().isEmpty()) {
-                api.setName("Unnamed API");
-                logger.warn("API name was missing or empty, set to default value");
-            }
-            
-            // Let the service handle the approval status based on user role
-            Api createdApi = apiService.addApi(api, user);
-            logger.info("API created with ID: {}, Status: {}", createdApi.getId(), createdApi.getApprovalStatus());
-            return new ResponseEntity<>(createdApi, HttpStatus.CREATED);
-        } catch (Exception e) {
-            logger.error("Error creating API for user {}. Error message: {}. Input data - Name: {}, Secteur: {}, Structure: {}, Description: {}, Availability: {}, ApprovalStatus: {}, UpdatedAt: {}",
-                user != null ? user.getUsername() : "Unknown", e.getMessage(), api.getName(), api.getSecteur(), api.getStructure(), api.getDescription(), api.getAvailability(), api.getApprovalStatus(), api.getUpdatedAt(), e);
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @GetMapping("/code/{id}")
+    public Api getApiByCode(@PathVariable String id) {
+        logger.info("Retrieving API by code: {}", id);
+        return apiService.getApiById(id);
     }
+    
+    /**
+     * Direct API creation has been removed.
+     * APIs should now be created through the request process using:
+     * - /api/api-access-request/new-api
+     * - /api/api-request/new-api
+     */
     
     /**
      * Update an existing API
@@ -155,33 +135,11 @@ public class ApiController {
     }
     
     /**
-     * Approve an API - Admin only
+     * NOTE: API approval/rejection endpoints have been moved to ApiRequestController
+     * APIs are now approved or rejected through the request process at:
+     * - PUT /api/api-request/{requestId}/approve
+     * - PUT /api/api-request/{requestId}/reject
      */
-    @PreAuthorize("hasAuthority('admin')")
-    @PostMapping("/{id}/approve")
-    public ResponseEntity<Api> approveApi(@PathVariable String id) {
-        Api approvedApi = apiService.updateApprovalStatus(id, "approved");
-        return new ResponseEntity<>(approvedApi, HttpStatus.OK);
-    }
-    
-    /**
-     * Reject an API - Admin only
-     */
-    @PreAuthorize("hasAuthority('admin')")
-    @PostMapping("/{id}/reject")
-    public ResponseEntity<Api> rejectApi(@PathVariable String id) {
-        Api rejectedApi = apiService.updateApprovalStatus(id, "rejected");
-        return new ResponseEntity<>(rejectedApi, HttpStatus.OK);
-    }
-    
-    /**
-     * Get pending API requests - Admin only
-     */
-    @PreAuthorize("hasAuthority('admin')")
-    @GetMapping("/pending")
-    public Page<Api> getPendingApis(Pageable pageable) {
-        return apiService.getPendingApis(pageable);
-    }
     
     /**
      * Get the approval status of the most recent APIs for debugging purposes
