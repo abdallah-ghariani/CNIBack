@@ -19,16 +19,20 @@ import com.example.demo.entity.Secteur;
 @Document(collection = "users")
 @QueryEntity
 @JsonIgnoreProperties({"password", "authorities","accountNonLocked","credentialsNonExpired","enabled","accountNonExpired"})
-public class User implements UserDetails{
-	
+public class User implements UserDetails {
+    
+    // Role constants
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+    public static final String ROLE_USER = "ROLE_USER";
+    
     @Id
     private String id;
 
-	@Indexed(unique = true)
+    @Indexed(unique = true)
     private String username;
     private String password;
     
-    // Role of the user (e.g., "user", "admin")
+    // Role of the user (e.g., "ROLE_USER", "ROLE_ADMIN")
     private String role;
     
     // Relationship with Structure
@@ -67,11 +71,19 @@ public class User implements UserDetails{
   	
   	// Role helper methods
   	public boolean isAdmin() {
-  		return "admin".equalsIgnoreCase(role);
+  		return ROLE_ADMIN.equals(role);
   	}
   	
   	public boolean isUser() {
-  		return "user".equalsIgnoreCase(role);
+  		return ROLE_USER.equals(role);
+  	}
+  	
+  	public void setAdminRole() {
+  		this.role = ROLE_ADMIN;
+  	}
+  	
+  	public void setUserRole() {
+  		this.role = ROLE_USER;
   	}
   	
   	// Structure relationship getters and setters

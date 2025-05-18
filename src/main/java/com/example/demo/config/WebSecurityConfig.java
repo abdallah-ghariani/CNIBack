@@ -41,7 +41,8 @@ public class WebSecurityConfig {
         	.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         	.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests((request) -> request
-            	.requestMatchers("/api/auth/**","/api/services/**","/api/structures/**","/api/secteurs/**","/api/adheration/request","/api/api-request/**").permitAll()
+            	.requestMatchers("/api/auth/**","/api/services/**","/api/structures/**","/api/secteurs/**","/api/adheration/request").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
              )
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))

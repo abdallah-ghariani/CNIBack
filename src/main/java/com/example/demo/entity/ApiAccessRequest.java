@@ -1,5 +1,6 @@
 package com.example.demo.entity;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import org.springframework.data.annotation.Id;
@@ -17,23 +18,31 @@ public class ApiAccessRequest {
     private String providerId;   // ID of the provider who owns the API
     private String name;         // consumer name
     private String email;
-    private String secteur;
+    private String secteur;      // Requester's sector
     private String structure;
     private String message;
     private Date requestDate;
-    private String status;       // pending/approved/rejected
+    private String status;       // PENDING/APPROVED/REJECTED
     private String apiName;      // Denormalized for convenience
+    private String apiSector;    // API's sector for access control
+    private String requesterSector; // Requester's sector for filtering
+    private String approvedById;  // User ID who approved the request
+    private String rejectedById;  // User ID who rejected the request
+    private LocalDateTime approvalDate;  // When the request was approved
+    private LocalDateTime rejectionDate; // When the request was rejected
+    private String feedback;      // Feedback from approver/rejector
     private String service;      // Required for service filtering
     private String description;  // Detailed API information
     private String metadata;     // JSON string with API configuration
     
     public ApiAccessRequest() {
         this.requestDate = new Date();
-        this.status = "pending";
+        this.status = "PENDING";
     }
     
     public ApiAccessRequest(String apiId, String consumerId, String name, String email, 
                      String secteur, String structure, String message, String apiName) {
+        this();
         this.apiId = apiId;
         this.consumerId = consumerId;
         this.name = name;
@@ -41,8 +50,6 @@ public class ApiAccessRequest {
         this.secteur = secteur;
         this.structure = structure;
         this.message = message;
-        this.requestDate = new Date();
-        this.status = "pending";
         this.apiName = apiName;
     }
     
@@ -173,5 +180,61 @@ public class ApiAccessRequest {
 
     public void setMetadata(String metadata) {
         this.metadata = metadata;
+    }
+    
+    public String getApiSector() {
+        return apiSector;
+    }
+
+    public void setApiSector(String apiSector) {
+        this.apiSector = apiSector;
+    }
+
+    public String getRequesterSector() {
+        return requesterSector;
+    }
+
+    public void setRequesterSector(String requesterSector) {
+        this.requesterSector = requesterSector;
+    }
+
+    public String getApprovedById() {
+        return approvedById;
+    }
+
+    public void setApprovedById(String approvedById) {
+        this.approvedById = approvedById;
+    }
+
+    public String getRejectedById() {
+        return rejectedById;
+    }
+
+    public void setRejectedById(String rejectedById) {
+        this.rejectedById = rejectedById;
+    }
+
+    public LocalDateTime getApprovalDate() {
+        return approvalDate;
+    }
+
+    public void setApprovalDate(LocalDateTime approvalDate) {
+        this.approvalDate = approvalDate;
+    }
+
+    public LocalDateTime getRejectionDate() {
+        return rejectionDate;
+    }
+
+    public void setRejectionDate(LocalDateTime rejectionDate) {
+        this.rejectionDate = rejectionDate;
+    }
+
+    public String getFeedback() {
+        return feedback;
+    }
+
+    public void setFeedback(String feedback) {
+        this.feedback = feedback;
     }
 }

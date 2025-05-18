@@ -25,7 +25,7 @@ import com.example.demo.entity.ApiRequest;
 import com.example.demo.servecies.ApiRequestService;
 
 @RestController
-@RequestMapping("/api/api-request")
+@RequestMapping("/api/api-creation-request")
 public class ApiRequestController {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiRequestController.class);
