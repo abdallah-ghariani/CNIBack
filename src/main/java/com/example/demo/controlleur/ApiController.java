@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -69,10 +71,13 @@ public class ApiController {
             @RequestParam(required = false) String description,
             @RequestParam(required = false) Double availability,
             @RequestParam(required = false) String approvalStatus,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date updatedAt,@AuthenticationPrincipal User user ) {
-        logger.info("Retrieving all APIs, search: {}, name: {}, secteur: {}, structure: {}, service: {}, description: {}, availability: {}, approvalStatus: {}, updatedAt: {}", 
-            search, name, secteur, structure, service, description, availability, approvalStatus, updatedAt);
-        Page<Api> apiPage = apiService.getAll(pageable, search, name, secteur, structure, service, description, availability, updatedAt, approvalStatus, user);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date updatedAt,
+            @RequestParam(required = false) String sectorId,
+            @RequestParam(required = false) String serviceId,
+            @AuthenticationPrincipal User user) {
+        logger.info("Retrieving all APIs, search: {}, name: {}, secteur: {}, structure: {}, service: {}, description: {}, availability: {}, approvalStatus: {}, updatedAt: {}, sectorId: {}, serviceId: {}", 
+            search, name, secteur, structure, service, description, availability, approvalStatus, updatedAt, sectorId, serviceId);
+        Page<Api> apiPage = apiService.getAll(pageable, search, name, secteur, structure, service, description, availability, updatedAt, approvalStatus, sectorId, serviceId, user);
         logger.info("Retrieved {} APIs", apiPage.getContent().size());
         for (Api api : apiPage.getContent()) {
             logger.info("API ID: {}, Name: {}, Approval Status: {}", api.getId(), api.getName(), api.getApprovalStatus());
@@ -154,5 +159,58 @@ public class ApiController {
             logger.info("Recent API ID: {}, Name: {}, Approval Status: {}", api.getId(), api.getName(), api.getApprovalStatus());
         }
         return new ResponseEntity<>(recentApis, HttpStatus.OK);
+    }
+    
+    /**
+     * Get all approved APIs for the current user's sector
+     * @param user The authenticated user
+     * @param page Page number (zero-based, default: 0)
+     * @param size Number of items per page (default: 10)
+     * @return Page of approved APIs for the user's sector
+     */
+    @GetMapping("/approved/my-sector")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<Api>> getApprovedApisForMySector(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        logger.info("=== Getting approved APIs for user's sector ===");
+        logger.info("User: {} (ID: {})", user.getUsername(), user.getId());
+        logger.info("User roles: {}", user.getAuthorities());
+        logger.info("User details: {}", user);
+            
+        if (user.getSecteur() == null) {
+            logger.warn("❌ User {} has no secteur assigned", user.getUsername());
+            logger.warn("User object: {}", user);
+            return ResponseEntity.ok(Page.empty());
+        }
+        
+        String secteurId = user.getSecteur().getId();
+        if (secteurId == null || secteurId.trim().isEmpty()) {
+            logger.warn("❌ User {} has an invalid secteur ID", user.getUsername());
+            logger.warn("Secteur object: {}", user.getSecteur());
+            return ResponseEntity.ok(Page.empty());
+        }
+        
+        logger.info("🔍 User's secteur ID: {}", secteurId);
+        logger.info("📋 Requesting approved APIs for secteur ID: {}", secteurId);
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+            logger.info("Pageable: {}", pageable);
+            
+            Page<Api> approvedApis = apiService.findApprovedApisBySector(secteurId, pageable);
+            
+            logger.info("✅ Found {} approved APIs for secteur: {}", 
+                approvedApis.getTotalElements(), secteurId);
+            logger.info("Page {} of {} ({} items per page)", 
+                approvedApis.getNumber(), approvedApis.getTotalPages(), approvedApis.getSize());
+                
+            return ResponseEntity.ok(approvedApis);
+        } catch (Exception e) {
+            logger.error("❌ Error getting approved APIs for secteur {}: {}", secteurId, e.getMessage(), e);
+            throw e; // Let the global exception handler handle it
+        }
     }
 }
