@@ -18,7 +18,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/requests")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('admin')")
 public class AdminApiRequestController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminApiRequestController.class);

@@ -1,5 +1,6 @@
 package com.example.demo.controlleur;
 
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -191,5 +192,30 @@ public class ApiAccessRequestController {
         }
         
         return ResponseEntity.ok(request);
+    }
+    
+    /**
+     * Get all approved API requests for the current user
+     * @param userDetails authenticated user details
+     * @return list of approved API requests for the current user
+     */
+    @GetMapping("/approved/my")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<ApiAccessRequest>> getMyApprovedRequests(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER) int page,
+            @RequestParam(defaultValue = DEFAULT_PAGE_SIZE) int size) {
+        
+        User currentUser = userService.findByUsername(userDetails.getUsername())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            
+        // Get approved requests for the current user
+        Page<ApiAccessRequest> approvedRequests = requestService.findByRequesterAndStatus(
+            currentUser,
+            "APPROVED",
+            PageRequest.of(page, size, Sort.by("approvalDate").descending())
+        );
+        
+        return ResponseEntity.ok(approvedRequests);
     }
 }

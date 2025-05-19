@@ -395,6 +395,7 @@ public class ApiRequestService {
         // Set API details
         request.setApiName(dto.getApiName());
         request.setDescription(dto.getApiDescription());
+        request.setService(dto.getService());
         
         // Build metadata with additional API details
         StringBuilder metadata = new StringBuilder();
@@ -460,6 +461,12 @@ public class ApiRequestService {
             // Set structure and sector information
             newApi.setSecteur(request.getSecteur());
             newApi.setStructure(request.getStructure());
+            
+            // Set the service field from the request
+            if (request.getService() != null) {
+                newApi.setService(request.getService());
+                logger.info("Setting service ID: {} for new API", request.getService());
+            }
             
             // Set API provider to the original requester
             newApi.setProviderId(request.getProviderId());

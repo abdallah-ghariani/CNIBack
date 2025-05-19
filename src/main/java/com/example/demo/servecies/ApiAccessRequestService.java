@@ -98,6 +98,9 @@ public class ApiAccessRequestService {
     /**
      * Find API access requests by requester with optional status filter
      */
+    /**
+     * Find API access requests by requester with optional status filter
+     */
     public Page<ApiAccessRequest> findByRequester(User requester, String status, Pageable pageable) {
         logger.info("Finding API access requests for requester: {}", requester.getId());
         if (status != null && !status.isEmpty()) {
@@ -109,6 +112,22 @@ public class ApiAccessRequestService {
         } else {
             return accessRequestRepository.findByConsumerId(requester.getId(), pageable);
         }
+    }
+    
+    /**
+     * Find API access requests by requester with a specific status
+     * @param requester The user who made the requests
+     * @param status The status to filter by (e.g., "APPROVED", "PENDING", "REJECTED")
+     * @param pageable Pagination information
+     * @return Page of API access requests matching the criteria
+     */
+    public Page<ApiAccessRequest> findByRequesterAndStatus(User requester, String status, Pageable pageable) {
+        logger.info("Finding {} API access requests for requester: {}", status, requester.getId());
+        return accessRequestRepository.findByConsumerIdAndStatus(
+            requester.getId(),
+            status.toUpperCase(),
+            pageable
+        );
     }
     
     /**

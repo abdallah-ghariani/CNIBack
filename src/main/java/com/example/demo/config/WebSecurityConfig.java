@@ -42,7 +42,7 @@ public class WebSecurityConfig {
         	.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests((request) -> request
             	.requestMatchers("/api/auth/**","/api/services/**","/api/structures/**","/api/secteurs/**","/api/adheration/request").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasAuthority("admin")
                 .anyRequest().authenticated()
              )
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))

@@ -20,11 +20,12 @@ public class Api {
     private Date updatedAt;
     private String approvalStatus; // pending, approved, rejected
     private String providerId; // ID of the provider who owns this API
+    private String service; // ID of the service this API belongs to
     
     public Api() {
     }
 
-    public Api(String name, String description, String secteur, String structure, double availability, Date updatedAt, String providerId) {
+    public Api(String name, String description, String secteur, String structure, double availability, Date updatedAt, String providerId, String service) {
         this.name = name;
         this.description = description;
         this.secteur = secteur;
@@ -33,6 +34,7 @@ public class Api {
         this.updatedAt = updatedAt;
         this.approvalStatus = "pending";
         this.providerId = providerId;
+        this.service = service;
     }
 
     public String getId() {
@@ -105,5 +107,13 @@ public class Api {
     
     public void setProviderId(String providerId) {
         this.providerId = providerId;
+    }
+    
+    public String getService() {
+        return service;
+    }
+
+    public void setService(String service) {
+        this.service = service;
     }
 }
