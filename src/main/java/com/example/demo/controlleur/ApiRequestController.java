@@ -143,4 +143,37 @@ public class ApiRequestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+    
+    /**
+     * Get API creation requests made by the current user
+     * @param page Page number (0-based)
+     * @param size Page size
+     * @param type Optional filter for request type (e.g., "CREATION", "ALL")
+     * @return List of API creation requests for the current user
+     */
+    @GetMapping("/my-requests")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ApiRequest>> getMyRequests(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String type) {
+        
+        logger.info("Getting user's API creation requests, type: {}", type);
+        
+        try {
+            // Get user's API creation requests (paginate manually since we're using stream filtering)
+            List<ApiRequest> requests = apiRequestService.getUserApiCreationRequests(type);
+            
+            // Manual pagination (could be improved with Spring's PageImpl)
+            int start = Math.min(page * size, requests.size());
+            int end = Math.min(start + size, requests.size());
+            
+            List<ApiRequest> pagedRequests = requests.subList(start, end);
+            
+            return ResponseEntity.ok(pagedRequests);
+        } catch (Exception e) {
+            logger.error("Error fetching user's API creation requests: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

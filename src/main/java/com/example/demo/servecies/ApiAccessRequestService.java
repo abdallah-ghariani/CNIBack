@@ -84,14 +84,24 @@ public class ApiAccessRequestService {
      */
     public Page<ApiAccessRequest> findBySector(Secteur secteur, String status, Pageable pageable) {
         logger.info("Finding API access requests for sector: {}", secteur.getName());
+        
+        // Use either the sector ID or name based on how it's stored in the database
+        // Check if apiSector field in database contains IDs or names
+        String sectorIdentifier = secteur.getId(); // Use ID as the default
+        
+        // If your data shows apiSector is actually storing the name, use this instead:
+        // String sectorIdentifier = secteur.getName();
+        
+        logger.info("Using sector identifier: {}", sectorIdentifier);
+        
         if (status != null && !status.isEmpty()) {
             return accessRequestRepository.findByApiSectorAndStatus(
-                secteur.getName(),
+                sectorIdentifier,
                 status.toUpperCase(),
                 pageable
             );
         } else {
-            return accessRequestRepository.findByApiSector(secteur.getName(), pageable);
+            return accessRequestRepository.findByApiSector(sectorIdentifier, pageable);
         }
     }
     
@@ -135,8 +145,17 @@ public class ApiAccessRequestService {
      */
     public boolean canManageRequest(User user, String requestId) {
         ApiAccessRequest request = getRequestById(requestId);
-        return user.getSecteur() != null && 
-               user.getSecteur().getName().equals(request.getApiSector());
+        
+        if (user.getSecteur() == null) {
+            logger.warn("User {} has no sector assigned", user.getId());
+            return false;
+        }
+        
+        String userSectorId = user.getSecteur().getId();
+        logger.info("Checking if user sector ID: {} matches API sector: {} for request {}", 
+            userSectorId, request.getApiSector(), requestId);
+            
+        return userSectorId.equals(request.getApiSector());
     }
     
     /**
@@ -196,9 +215,18 @@ public class ApiAccessRequestService {
         ApiAccessRequest request = getRequestById(requestId);
         
         // Verify approver is from the API's sector
-        if (approver.getSecteur() == null || 
-            !approver.getSecteur().getName().equals(request.getApiSector())) {
-            throw new AccessDeniedException("Not authorized to approve this request");
+        if (approver.getSecteur() == null) {
+            throw new AccessDeniedException("Not authorized to approve this request: user has no sector");
+        }
+        
+        // Get the sector ID from the approver's sector
+        String approverSectorId = approver.getSecteur().getId();
+        
+        // Compare with the API sector ID stored in the request
+        logger.info("Comparing approver sector ID: {} with request API sector: {}", approverSectorId, request.getApiSector());
+        
+        if (!approverSectorId.equals(request.getApiSector())) {
+            throw new AccessDeniedException("Not authorized to approve this request: sector mismatch");
         }
         
         // Update request status
@@ -233,9 +261,18 @@ public class ApiAccessRequestService {
         ApiAccessRequest request = getRequestById(requestId);
         
         // Verify rejector is from the API's sector
-        if (rejector.getSecteur() == null || 
-            !rejector.getSecteur().getName().equals(request.getApiSector())) {
-            throw new AccessDeniedException("Not authorized to reject this request");
+        if (rejector.getSecteur() == null) {
+            throw new AccessDeniedException("Not authorized to reject this request: user has no sector");
+        }
+        
+        // Get the sector ID from the rejector's sector
+        String rejectorSectorId = rejector.getSecteur().getId();
+        
+        // Compare with the API sector ID stored in the request
+        logger.info("Comparing rejector sector ID: {} with request API sector: {}", rejectorSectorId, request.getApiSector());
+        
+        if (!rejectorSectorId.equals(request.getApiSector())) {
+            throw new AccessDeniedException("Not authorized to reject this request: sector mismatch");
         }
         
         // Update request status

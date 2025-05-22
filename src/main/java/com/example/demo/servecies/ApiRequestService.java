@@ -542,4 +542,30 @@ public class ApiRequestService {
             .filter(req -> req.getApiId() == null && "pending".equals(req.getStatus()))
             .collect(Collectors.toList());
     }
+    
+    /**
+     * Get API creation requests for the current user
+     * This is used to show users their own API creation requests
+     * 
+     * @param type Optional filter for request type (e.g., "CREATION", "ALL")
+     * @return List of API creation requests for the current user
+     */
+    public List<ApiRequest> getUserApiCreationRequests(String type) {
+        User currentUser = userService.getCurrentUser();
+        logger.info("Getting API creation requests for user: {}, type: {}", currentUser.getUsername(), type);
+        
+        // Get all requests for the current user
+        List<ApiRequest> userRequests = apiRequestRepository.findByProviderId(currentUser.getId());
+        
+        // Filter based on request type
+        if ("CREATION".equalsIgnoreCase(type)) {
+            // Return only creation requests (apiId is null)
+            return userRequests.stream()
+                .filter(req -> req.getApiId() == null)
+                .collect(Collectors.toList());
+        } else {
+            // Return all requests for this user
+            return userRequests;
+        }
+    }
 }

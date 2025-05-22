@@ -45,6 +45,30 @@ public class ApiAccessRequestController {
      * @param userDetails authenticated user details
      * @return created API request
      */
+    @PostMapping({"", "/access"})
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiAccessRequest> submitAccessRequest(
+            @RequestBody ApiAccessRequestDTO requestDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        User requester = userService.findByUsername(userDetails.getUsername())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        // Check if user has a sector assigned
+        if (requester.getSecteur() == null) {
+            throw new UnauthorizedAccessException("User does not belong to any sector");
+        }
+        
+        ApiAccessRequest createdRequest = requestService.createRequest(requestDTO, requester);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdRequest);
+    }
+    
+    /**
+     * Get API access requests for the current user's sector
+     * @param userDetails authenticated user details
+     * @return list of API requests
+     */
     @GetMapping("/sector")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<ApiAccessRequest>> getRequestsForSector(
@@ -119,7 +143,7 @@ public class ApiAccessRequestController {
             @RequestParam(required = false) String feedback,
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        User approver = userService.findById(userDetails.getUsername())
+        User approver = userService.findByUsername(userDetails.getUsername())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
         // Verify the approver has the right to approve this request
@@ -150,7 +174,7 @@ public class ApiAccessRequestController {
             @RequestParam(required = false) String feedback,
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        User rejector = userService.findById(userDetails.getUsername())
+        User rejector = userService.findByUsername(userDetails.getUsername())
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         
         // Verify the rejector has the right to reject this request
