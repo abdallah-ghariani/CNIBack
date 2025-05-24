@@ -66,7 +66,7 @@ public class ApiRequestController {
      * Admin only endpoint
      */
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<List<ApiRequest>> getPendingRequests() {
         logger.info("Admin fetching all pending API creation requests");
         try {
@@ -84,7 +84,7 @@ public class ApiRequestController {
      * This creates a new API with 'approved' status automatically
      */
     @PutMapping("/{requestId}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<Object> approveRequest(
             @PathVariable String requestId,
             @RequestParam(required = false) String feedback) {
@@ -114,7 +114,7 @@ public class ApiRequestController {
      * Reject an API creation request
      */
     @PutMapping("/{requestId}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('admin')")
     public ResponseEntity<Object> rejectRequest(
             @PathVariable String requestId,
             @RequestParam(required = false) String feedback) {

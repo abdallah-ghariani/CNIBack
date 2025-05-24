@@ -22,6 +22,74 @@ public class Api {
     private String providerId; // ID of the provider who owns this API
     private String service; // ID of the service this API belongs to
     
+    // API endpoint details
+    private String baseUrl;    // The base URL/endpoint of the API
+    private String version;    // API version
+    private String documentation; // Documentation URL or text
+    private String swaggerUrl;  // URL to the Swagger/OpenAPI specification
+    
+    // Authentication details
+    private String authType;     // OAuth2, API Key, etc.
+    private boolean authRequired; // Whether authentication is required
+    private String[] authMethods; // Array of authentication methods
+    
+    // Endpoint details
+    private String endpointDescription; // Description of the endpoint
+    private String endpointMethod;     // HTTP method (GET, POST, etc.)
+    private String endpointPath;       // Path of the endpoint
+    
+    // Examples
+    private String exampleRequest;  // Example request
+    private String inputExample;   // Example input
+    private String outputExample;  // Example output
+    
+    // Additional fields
+    private boolean requiresAuth;     // Whether authentication is required
+    private String[] pathParameters; // Path parameters
+    
+    // Response codes
+    private ResponseCode[] responseCodes; // Array of response codes
+    
+    // Inner class for response codes
+    public static class ResponseCode {
+        private String statusCode;  // HTTP status code
+        private String description; // Description of the status code
+        private String resource;    // Resource associated with the status code
+        
+        public ResponseCode() {
+        }
+        
+        public ResponseCode(String statusCode, String description, String resource) {
+            this.statusCode = statusCode;
+            this.description = description;
+            this.resource = resource;
+        }
+        
+        public String getStatusCode() {
+            return statusCode;
+        }
+        
+        public void setStatusCode(String statusCode) {
+            this.statusCode = statusCode;
+        }
+        
+        public String getDescription() {
+            return description;
+        }
+        
+        public void setDescription(String description) {
+            this.description = description;
+        }
+        
+        public String getResource() {
+            return resource;
+        }
+        
+        public void setResource(String resource) {
+            this.resource = resource;
+        }
+    }
+    
     public Api() {
     }
 
@@ -35,6 +103,13 @@ public class Api {
         this.approvalStatus = "pending";
         this.providerId = providerId;
         this.service = service;
+    }
+    
+    public Api(String name, String description, String secteur, String structure, double availability, Date updatedAt, String providerId, String service, String baseUrl, String version, String documentation) {
+        this(name, description, secteur, structure, availability, updatedAt, providerId, service);
+        this.baseUrl = baseUrl;
+        this.version = version;
+        this.documentation = documentation;
     }
 
     public String getId() {
@@ -115,5 +190,133 @@ public class Api {
 
     public void setService(String service) {
         this.service = service;
+    }
+    
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+    
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+    
+    public String getVersion() {
+        return version;
+    }
+    
+    public void setVersion(String version) {
+        this.version = version;
+    }
+    
+    public String getDocumentation() {
+        return documentation;
+    }
+    
+    public void setDocumentation(String documentation) {
+        this.documentation = documentation;
+    }
+    
+    public String getSwaggerUrl() {
+        return swaggerUrl;
+    }
+    
+    public void setSwaggerUrl(String swaggerUrl) {
+        this.swaggerUrl = swaggerUrl;
+    }
+    
+    public String getAuthType() {
+        return authType;
+    }
+    
+    public void setAuthType(String authType) {
+        this.authType = authType;
+    }
+    
+    public boolean isAuthRequired() {
+        return authRequired;
+    }
+    
+    public void setAuthRequired(boolean authRequired) {
+        this.authRequired = authRequired;
+    }
+    
+    public String[] getAuthMethods() {
+        return authMethods;
+    }
+    
+    public void setAuthMethods(String[] authMethods) {
+        this.authMethods = authMethods;
+    }
+    
+    public String getEndpointDescription() {
+        return endpointDescription;
+    }
+    
+    public void setEndpointDescription(String endpointDescription) {
+        this.endpointDescription = endpointDescription;
+    }
+    
+    public String getEndpointMethod() {
+        return endpointMethod;
+    }
+    
+    public void setEndpointMethod(String endpointMethod) {
+        this.endpointMethod = endpointMethod;
+    }
+    
+    public String getEndpointPath() {
+        return endpointPath;
+    }
+    
+    public void setEndpointPath(String endpointPath) {
+        this.endpointPath = endpointPath;
+    }
+    
+    public String getExampleRequest() {
+        return exampleRequest;
+    }
+    
+    public void setExampleRequest(String exampleRequest) {
+        this.exampleRequest = exampleRequest;
+    }
+    
+    public String getInputExample() {
+        return inputExample;
+    }
+    
+    public void setInputExample(String inputExample) {
+        this.inputExample = inputExample;
+    }
+    
+    public String getOutputExample() {
+        return outputExample;
+    }
+    
+    public void setOutputExample(String outputExample) {
+        this.outputExample = outputExample;
+    }
+    
+    public boolean isRequiresAuth() {
+        return requiresAuth;
+    }
+    
+    public void setRequiresAuth(boolean requiresAuth) {
+        this.requiresAuth = requiresAuth;
+    }
+    
+    public String[] getPathParameters() {
+        return pathParameters;
+    }
+    
+    public void setPathParameters(String[] pathParameters) {
+        this.pathParameters = pathParameters;
+    }
+    
+    public ResponseCode[] getResponseCodes() {
+        return responseCodes;
+    }
+    
+    public void setResponseCodes(ResponseCode[] responseCodes) {
+        this.responseCodes = responseCodes;
     }
 }

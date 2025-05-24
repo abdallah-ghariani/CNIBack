@@ -52,6 +52,25 @@ public class ApiService {
         logger.info("Getting APIs with filters - search: {}, name: {}, secteur: {}, structure: {}, service: {}, approvalStatus: {}, sectorId: {}, serviceId: {}",
                 search, name, secteur, structure, service, approvalStatus, sectorId, serviceId);
         
+        // For empty queries, directly use the repository to get all APIs
+        boolean hasAnyFilter = (search != null && !search.trim().isEmpty()) || 
+                            (name != null && !name.trim().isEmpty()) || 
+                            (secteur != null && !secteur.trim().isEmpty()) || 
+                            (structure != null && !structure.trim().isEmpty()) || 
+                            (service != null && !service.trim().isEmpty()) || 
+                            (description != null && !description.trim().isEmpty()) || 
+                            (availability != null) || 
+                            (approvalStatus != null && !approvalStatus.trim().isEmpty()) || 
+                            (sectorId != null && !sectorId.trim().isEmpty()) || 
+                            (serviceId != null && !serviceId.trim().isEmpty());
+                            
+        if (!hasAnyFilter) {
+            logger.info("No filters applied, returning all APIs");
+            Page<Api> allApis = apiRepository.findAll(pageable);
+            logger.info("Found {} APIs total", allApis.getTotalElements());
+            return allApis;
+        }
+        
         // Handle structure filter first as it has highest priority
         if (structure != null && !structure.trim().isEmpty()) {
             logger.info("Filtering APIs by structure: '{}' using direct query", structure);
@@ -74,7 +93,7 @@ public class ApiService {
         // For non-structure queries, use the standard filtering approach
         Api probe = new Api();
         
-        // Apply basic filters
+        // Apply basic filters only if they're provided
         if (name != null && !name.trim().isEmpty()) {
             probe.setName(name);
         }
@@ -97,6 +116,10 @@ public class ApiService {
             probe.setApprovalStatus(approvalStatus.trim());
         }
         
+        if (availability != null) {
+            probe.setAvailability(availability);
+        }
+        
         // Configure the matcher
         ExampleMatcher matcher = ExampleMatcher.matching()
                 .withIgnoreNullValues()
@@ -108,7 +131,9 @@ public class ApiService {
                 .withMatcher("structure", ExampleMatcher.GenericPropertyMatchers.exact())
                 .withMatcher("secteur", ExampleMatcher.GenericPropertyMatchers.exact())
                 .withMatcher("name", ExampleMatcher.GenericPropertyMatchers.contains())
-                .withMatcher("description", ExampleMatcher.GenericPropertyMatchers.contains());
+                .withMatcher("description", ExampleMatcher.GenericPropertyMatchers.contains())
+                // Ignore default boolean fields that might filter out APIs
+                .withIgnorePaths("authRequired", "requiresAuth");
         
         // Handle search term if provided
         if (search != null && !search.trim().isEmpty()) {
@@ -158,6 +183,7 @@ public class ApiService {
         Page<Api> apiPage = apiRepository.findAll(example, pageable);
         
         // Log the results
+        logger.info("Query complete. Found {} APIs matching the filters", apiPage.getTotalElements());
         logger.info("Query complete. Found {} APIs matching the filters", apiPage.getTotalElements());
         
         // Set default approval status for existing APIs without this field

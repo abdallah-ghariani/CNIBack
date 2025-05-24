@@ -60,8 +60,13 @@ public class UserController {
 	
 	@PreAuthorize("hasAuthority('admin')")
 	@GetMapping()
-	public Page<User> getallusers(Pageable page, @RequestParam(required = false) String username,  @RequestParam(required = false) String role) {
-		return userService.getAllUsers(page, username, role);
+	public Page<User> getallusers(
+			Pageable page, 
+			@RequestParam(required = false) String username,
+			@RequestParam(required = false) String role,
+			@RequestParam(required = false) String secteurId,
+			@RequestParam(required = false) String structureId) {
+		return userService.getAllUsers(page, username, role, secteurId, structureId);
 	}
 	@PreAuthorize("hasAuthority('admin')")
 	@PutMapping("/{id}")

@@ -219,114 +219,11 @@ public class ApiRequestService {
             .orElseThrow(() -> new ResourceNotFoundException("API request not found with ID: " + requestId));
     }
     
-    /**
-     * Approve an API access request
-     * Only the provider of the API can approve a request
-     * When approved, a user account is created with a generated password
-     * 
-     * @return UserCredentialsDto containing the user's email, username, and password
-     */
-    public UserCredentialsDto approveRequest(String requestId) {
-        User provider = userService.getCurrentUser();
-        logger.info("Approving API access request ID: {} by provider: {}", 
-                   requestId, provider.getUsername());
-        
-        // Find the request
-        ApiRequest request = apiRequestRepository.findById(requestId)
-            .orElseThrow(() -> new ResourceNotFoundException("Request not found with ID: " + requestId));
-            
-        // Verify the API belongs to this provider
-        Api api = apiRepository.findById(request.getApiId())
-            .orElseThrow(() -> new ResourceNotFoundException("API not found with ID: " + request.getApiId()));
-        
-        // Check if current user is an admin (admins can approve any request)
-        boolean isAdmin = false;
-        if (provider != null && provider.getAuthorities() != null) {
-            isAdmin = provider.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().toLowerCase().contains("admin"));
-            logger.info("User role check - Username: {}, IsAdmin: {}", provider.getUsername(), isAdmin);
-        }
-        
-        // If not admin, check if providerId matches current user
-        if (!isAdmin) {
-            // Check if providerId is set and matches current user
-            String providerId = api.getProviderId();
-            if (providerId == null) {
-                // If providerId is not set, log a warning and use the request's providerId if available
-                logger.warn("API {} does not have a providerId set, using providerId from request", api.getId());
-                providerId = request.getProviderId();
-            }
-            
-            if (providerId == null || !providerId.equals(provider.getId())) {
-                throw new UnauthorizedException("Not authorized to approve this request - must be API provider or admin");
-            }
-        } else {
-            logger.info("Admin user {} is bypassing providerId check for approval", provider.getUsername());
-        }
-        
-        // Check if request is already processed
-        if (!request.getStatus().equals("pending")) {
-            throw new BadRequestException("Request is already " + request.getStatus());
-        }
-        
-        // Update request status
-        request.setStatus("approved");
-        apiRequestRepository.save(request);
-        
-        // Generate a random password for the new user
-        String generatedPassword = generateSecurePassword();
-        
-        // Create a new user account using the request information
-        String username = request.getEmail().split("@")[0]; // Use part of email as username
-        userService.addUser(username, generatedPassword, "consumer");
-        
-        // Return the user credentials
-        UserCredentialsDto credentials = new UserCredentialsDto(
-            request.getEmail(),
-            username,
-            generatedPassword
-        );
-        
-        logger.info("Created new user account for approved request. Username: {}", username);
-        
-        return credentials;
-    }
+    
     
     /**
      * Generates a secure random password
-     */
-    private String generateSecurePassword() {
-        final String CHAR_LOWER = "abcdefghijklmnopqrstuvwxyz";
-        final String CHAR_UPPER = CHAR_LOWER.toUpperCase();
-        final String NUMBER = "0123456789";
-        final String SPECIAL = "!@#$%^&*()_-+=<>?";
-        final String ALL_CHARS = CHAR_LOWER + CHAR_UPPER + NUMBER + SPECIAL;
-        
-        SecureRandom random = new SecureRandom();
-        StringBuilder password = new StringBuilder(12); // 12 characters long
-        
-        // Ensure we have at least one of each type
-        password.append(CHAR_LOWER.charAt(random.nextInt(CHAR_LOWER.length())));
-        password.append(CHAR_UPPER.charAt(random.nextInt(CHAR_UPPER.length())));
-        password.append(NUMBER.charAt(random.nextInt(NUMBER.length())));
-        password.append(SPECIAL.charAt(random.nextInt(SPECIAL.length())));
-        
-        // Fill the rest with random characters
-        for (int i = 4; i < 12; i++) {
-            password.append(ALL_CHARS.charAt(random.nextInt(ALL_CHARS.length())));
-        }
-        
-        // Shuffle the password
-        char[] passwordArray = password.toString().toCharArray();
-        for (int i = 0; i < passwordArray.length; i++) {
-            int j = random.nextInt(passwordArray.length);
-            char temp = passwordArray[i];
-            passwordArray[i] = passwordArray[j];
-            passwordArray[j] = temp;
-        }
-        
-        return new String(passwordArray);
-    }
+     *
     
     /**
      * Reject an API access request
@@ -372,6 +269,7 @@ public class ApiRequestService {
      * Create a new API creation request
      * This is used when a user wants to submit a request to create a new API
      * The API is not created immediately but only when approved by an admin
+     * Updated to handle nested API object structure
      * 
      * @param dto The DTO containing details for the new API
      * @return The created API creation request
@@ -385,30 +283,62 @@ public class ApiRequestService {
         // Create a new request
         ApiRequest request = new ApiRequest();
         
-        // Set basic information
-        request.setName(dto.getRequesterName());
-        request.setEmail(dto.getRequesterEmail());
-        request.setSecteur(dto.getSecteur());
-        request.setStructure(dto.getStructure());
+        // Map requester information (try both name and requesterName)
+        if (dto.getName() != null) {
+            request.setName(dto.getName());
+        } else {
+            request.setName(dto.getRequesterName());
+        }
+        
+        if (dto.getEmail() != null) {
+            request.setEmail(dto.getEmail());
+        } else {
+            request.setEmail(dto.getRequesterEmail());
+        }
+        
         request.setMessage(dto.getMessage() != null ? dto.getMessage() : "Request to create new API");
         
-        // Set API details
+        // Map API details using getter methods that check both flat and nested structure
         request.setApiName(dto.getApiName());
-        request.setDescription(dto.getApiDescription());
+        request.setDescription(dto.getDescription());
+        request.setSecteur(dto.getSecteur());
+        request.setStructure(dto.getStructure());
         request.setService(dto.getService());
         
-        // Build metadata with additional API details
-        StringBuilder metadata = new StringBuilder();
-        if (dto.getApiEndpoint() != null) {
-            metadata.append("Endpoint: ").append(dto.getApiEndpoint()).append("\n");
+        // Map additional API details
+        request.setBaseUrl(dto.getBaseUrl());
+        request.setVersion(dto.getVersion());
+        request.setDocumentation(dto.getDocumentation());
+        request.setSwaggerUrl(dto.getSwaggerUrl());
+        
+        // Map authentication details
+        request.setAuthType(dto.getAuthType());
+        request.setAuthRequired(dto.getAuthRequired() != null ? dto.getAuthRequired() : false);
+        
+        // Map example data
+        request.setInputExample(dto.getInputExample());
+        request.setOutputExample(dto.getOutputExample());
+        request.setExampleRequest(dto.getExampleRequest());
+        
+        // Map endpoint details
+        if (dto.getEndpointDescription() != null) {
+            request.setEndpointDescription(dto.getEndpointDescription());
         }
-        if (dto.getApiVersion() != null) {
-            metadata.append("Version: ").append(dto.getApiVersion()).append("\n");
+        if (dto.getEndpointMethod() != null) {
+            request.setEndpointMethod(dto.getEndpointMethod());
         }
-        if (dto.getApiDocumentation() != null) {
-            metadata.append("Documentation: ").append(dto.getApiDocumentation()).append("\n");
+        if (dto.getEndpointPath() != null) {
+            request.setEndpointPath(dto.getEndpointPath());
         }
-        request.setMetadata(metadata.toString());
+        
+        // Map authorization details
+        if (dto.getRequiresAuth() != null) {
+            request.setRequiresAuth(dto.getRequiresAuth().booleanValue());
+        }
+        
+        // We no longer need to use metadata since all fields are stored directly
+        // Just set an empty metadata field or use it for any additional JSON data
+        request.setMetadata("");
         
         // Set the requester as provider
         if (user != null) {
@@ -418,9 +348,11 @@ public class ApiRequestService {
         // Mark as a creation request by setting apiId to null
         request.setApiId(null);
         
-        // Default status is pending
-        request.setStatus("pending");
-        request.setRequestDate(new Date());
+        // Use status from DTO or default to pending
+        request.setStatus(dto.getStatus() != null ? dto.getStatus() : "pending");
+        
+        // Use request date from DTO or default to current date
+        request.setRequestDate(dto.getRequestDate() != null ? dto.getRequestDate() : new Date());
         
         // Save and return the request
         return apiRequestRepository.save(request);
@@ -430,6 +362,7 @@ public class ApiRequestService {
      * Approve an API creation request
      * This will create a new API with 'approved' status
      * Only admins can approve creation requests
+     * Updated to store endpoint information in dedicated fields
      * 
      * @param requestId The ID of the API creation request to approve
      * @param feedback Optional feedback message
@@ -450,23 +383,57 @@ public class ApiRequestService {
         try {
             // Create a new API based on the request data
             Api newApi = new Api();
+            
+            // Transfer basic API information
             newApi.setName(request.getApiName());
             newApi.setDescription(request.getDescription());
-            
-            // Add additional details from metadata if available
-            if (request.getMetadata() != null && !request.getMetadata().isEmpty()) {
-                newApi.setDescription(newApi.getDescription() + "\n\n" + request.getMetadata());
-            }
-            
-            // Set structure and sector information
             newApi.setSecteur(request.getSecteur());
             newApi.setStructure(request.getStructure());
+            
+            // Transfer API endpoint details
+            newApi.setBaseUrl(request.getBaseUrl());
+            newApi.setVersion(request.getVersion());
+            newApi.setDocumentation(request.getDocumentation());
+            newApi.setSwaggerUrl(request.getSwaggerUrl());
+            
+            // Transfer authentication details
+            newApi.setAuthType(request.getAuthType());
+            newApi.setAuthRequired(request.isAuthRequired());
+            newApi.setRequiresAuth(request.isRequiresAuth());
+            
+            // Transfer endpoint details
+            newApi.setEndpointDescription(request.getEndpointDescription());
+            newApi.setEndpointMethod(request.getEndpointMethod());
+            newApi.setEndpointPath(request.getEndpointPath());
+            
+            // Transfer example data
+            newApi.setInputExample(request.getInputExample());
+            newApi.setOutputExample(request.getOutputExample());
+            newApi.setExampleRequest(request.getExampleRequest());
+            
+            // Transfer additional fields
+            newApi.setPathParameters(request.getPathParameters());
+            
+            // Note: We no longer need to parse metadata as we're directly transferring all fields
             
             // Set the service field from the request
             if (request.getService() != null) {
                 newApi.setService(request.getService());
                 logger.info("Setting service ID: {} for new API", request.getService());
             }
+            
+            // Note: We're using the metadata to extract fields instead of trying to access the original DTO
+            // The metadata already contains the key information we need for the API
+            
+            // Set additional defaults as needed
+            newApi.setAuthRequired(false);   // Default: auth not required unless specified
+            newApi.setRequiresAuth(false);   // Default: auth not required unless specified
+            
+            // Set default HTTP method if not specified
+            newApi.setEndpointMethod("GET");  // Default method
+            
+            // In the future, if we need to capture more details from the original request,
+            // we can consider storing the original request DTO in a cache or database
             
             // Set API provider to the original requester
             newApi.setProviderId(request.getProviderId());

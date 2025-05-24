@@ -27,6 +27,30 @@ public class ApiRequest {
     private String description;  // Detailed API information
     private String metadata;     // JSON string with API configuration
     
+    // Additional API details
+    private String baseUrl;      // API endpoint URL
+    private String version;      // API version
+    private String documentation; // Documentation URL
+    private String swaggerUrl;   // URL to the Swagger/OpenAPI definition
+    
+    // Authentication details
+    private String authType;     // OAuth2, API Key, etc.
+    private boolean authRequired; // Whether authentication is required
+    private boolean requiresAuth; // Another flag for auth requirement
+    
+    // Endpoint details
+    private String endpointDescription; // Description of the endpoint
+    private String endpointMethod;     // HTTP method (GET, POST, etc.)
+    private String endpointPath;       // Path of the endpoint
+    
+    // Example data
+    private String inputExample; // Example input/request data
+    private String outputExample; // Example output/response data
+    private String exampleRequest; // Example request command (e.g., curl)
+    
+    // Additional fields
+    private String[] pathParameters; // Path parameters
+    
     public ApiRequest() {
         this.requestDate = new Date();
         this.status = "pending";
@@ -173,5 +197,117 @@ public class ApiRequest {
 
     public void setMetadata(String metadata) {
         this.metadata = metadata;
+    }
+    
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+    
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+    
+    public String getVersion() {
+        return version;
+    }
+    
+    public void setVersion(String version) {
+        this.version = version;
+    }
+    
+    public String getDocumentation() {
+        return documentation;
+    }
+    
+    public void setDocumentation(String documentation) {
+        this.documentation = documentation;
+    }
+    
+    public String getSwaggerUrl() {
+        return swaggerUrl;
+    }
+    
+    public void setSwaggerUrl(String swaggerUrl) {
+        this.swaggerUrl = swaggerUrl;
+    }
+    
+    public String getAuthType() {
+        return authType;
+    }
+    
+    public void setAuthType(String authType) {
+        this.authType = authType;
+    }
+    
+    public boolean isAuthRequired() {
+        return authRequired;
+    }
+    
+    public void setAuthRequired(boolean authRequired) {
+        this.authRequired = authRequired;
+    }
+    
+    public String getInputExample() {
+        return inputExample;
+    }
+    
+    public void setInputExample(String inputExample) {
+        this.inputExample = inputExample;
+    }
+    
+    public String getOutputExample() {
+        return outputExample;
+    }
+    
+    public void setOutputExample(String outputExample) {
+        this.outputExample = outputExample;
+    }
+    
+    public String getExampleRequest() {
+        return exampleRequest;
+    }
+    
+    public void setExampleRequest(String exampleRequest) {
+        this.exampleRequest = exampleRequest;
+    }
+    
+    public boolean isRequiresAuth() {
+        return requiresAuth;
+    }
+    
+    public void setRequiresAuth(boolean requiresAuth) {
+        this.requiresAuth = requiresAuth;
+    }
+    
+    public String getEndpointDescription() {
+        return endpointDescription;
+    }
+    
+    public void setEndpointDescription(String endpointDescription) {
+        this.endpointDescription = endpointDescription;
+    }
+    
+    public String getEndpointMethod() {
+        return endpointMethod;
+    }
+    
+    public void setEndpointMethod(String endpointMethod) {
+        this.endpointMethod = endpointMethod;
+    }
+    
+    public String getEndpointPath() {
+        return endpointPath;
+    }
+    
+    public void setEndpointPath(String endpointPath) {
+        this.endpointPath = endpointPath;
+    }
+    
+    public String[] getPathParameters() {
+        return pathParameters;
+    }
+    
+    public void setPathParameters(String[] pathParameters) {
+        this.pathParameters = pathParameters;
     }
 }
