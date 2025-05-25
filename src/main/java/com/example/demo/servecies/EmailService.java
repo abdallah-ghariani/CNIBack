@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.EmailRequestDto;
 import com.example.demo.dto.UserCredentialsDto;
+import com.example.demo.entity.User;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -47,13 +48,13 @@ public class EmailService {
     /**
      * Creates a formatted HTML email content with user credentials
      */
-    public String createUserCredentialsEmailContent(UserCredentialsDto credentials) {
+    public static String createUserCredentialsEmailContent(User user) {
         return "<html><body>" +
                "<h2>Welcome to the CNI Platform</h2>" +
-               "<p>Hello " + credentials.getUsername() + ",</p>" +
+               "<p>Hello " + user.getUsername() + ",</p>" +
                "<p>Your account has been created. Here are your login credentials:</p>" +
-               "<p><strong>Username:</strong> " + credentials.getUsername() + "<br>" +
-               "<strong>Password:</strong> " + credentials.getPassword() + "</p>" +
+               "<p><strong>Username:</strong> " + user.getUsername() + "<br>" +
+               "<strong>Password:</strong> " + user.getPassword() + "</p>" +
                "<p>Please login with these credentials and change your password as soon as possible.</p>" +
                "<p>Regards,<br>" +
                "CNI Team</p>" +
